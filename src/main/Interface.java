@@ -7,8 +7,11 @@ import tasks.Backup;
 public class Interface {
 	public static void main(String[] args) {
 		try {
-			new DBS("224.0.0.3",4445,"224.0.0.3",4446,"224.0.0.3",4447).run();
-
+			if (args.length == 0)
+				new DBS("224.0.0.3",4445,"224.0.0.3",4446,"224.0.0.3",4447).run();
+			else if (args.length == 1)
+				new DBS(Integer.parseInt(args[0]),"224.0.0.3",4445,"224.0.0.3",4446,"224.0.0.3",4447).run();
+				
 			Scanner scanner = new Scanner(System.in);
 			while (true)
 			{

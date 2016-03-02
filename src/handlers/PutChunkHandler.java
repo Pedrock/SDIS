@@ -32,8 +32,8 @@ public class PutChunkHandler extends Handler {
 				byte[] content = matcher.group(6).getBytes(StandardCharsets.US_ASCII);
 				DBS.getBackupsFileManager().createFile(filename, content);
 				System.out.println("Chunk stored");
-				DBS.getMessageBuilder().sendStored(fileId,chunkNumber);
 			}
+			DBS.getMessageBuilder().sendStored(fileId,chunkNumber);
 		}
 		else System.out.println("Invalid PUTCHUNK received");
 	}

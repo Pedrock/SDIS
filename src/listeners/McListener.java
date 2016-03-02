@@ -31,7 +31,9 @@ public class McListener extends Listener {
 	}
 
 	public void handleStored(int sender, String fileId, int chunkNumber) {
+		if (storeCounter.isEmpty()) return;
 		Chunk chunkId = new Chunk(fileId, chunkNumber);
-		storeCounter.get(chunkId).add(sender);
+		HashSet<Integer> set = storeCounter.get(chunkId);
+		if (set != null) storeCounter.get(chunkId).add(sender);
 	}
 }

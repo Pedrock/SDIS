@@ -18,7 +18,7 @@ public class HandlerFactory {
 		if (!matcher.matches()) return null;
 		int senderId = Integer.parseInt(matcher.group(3));
 		if (senderId == DBS.getId()) return null; // Ignore own requests
-		switch (matcher.group(0)) // Message type
+		switch (matcher.group(1)) // Message type
 		{
 			case "PUTCHUNK":
 				return new PutChunkHandler(message);

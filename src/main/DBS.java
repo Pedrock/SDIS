@@ -13,7 +13,6 @@ public class DBS {
 	
 	private static int id = 1;
 	
-	
 	private static McListener mcListener;
 	private static MdbListener mdbListener;
 	private static MdrListener mdrListener;
@@ -30,6 +29,11 @@ public class DBS {
 		localFM = new FileManager("Files");
 		backupsFM = new FileManager("Backups");
 		messageBuilder = new MessageBuilder();
+	}
+	
+	DBS(int id, String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
+		this(mc_addr,mc_port,mdb_addr,mdb_port,mdr_addr,mdr_port);
+		DBS.id = id;
 	}
 
 	void run() {
