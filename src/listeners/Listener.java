@@ -8,11 +8,12 @@ import java.util.Arrays;
 
 import handlers.Handler;
 import handlers.HandlerFactory;
+import main.DBS;
 
 public abstract class Listener implements Runnable{
 	protected MulticastSocket socket;
 	protected InetAddress address;
-	protected byte[] buffer = new byte[1024];
+	protected byte[] buffer = new byte[2*DBS.CHUNK_SIZE];
 	private int port;
 	
 	public Listener(String address, int port) throws IOException {
@@ -23,17 +24,17 @@ public abstract class Listener implements Runnable{
 		socket.joinGroup(this.address);
 	}
 	
-	public InetAddress getAddress()
+	public synchronized InetAddress getAddress()
 	{
 		return address;
 	}
 	
-	public int getPort()
+	public synchronized int getPort()
 	{
 		return port;
 	}
 	
-	public MulticastSocket getSocket()
+	public synchronized MulticastSocket getSocket()
 	{
 		return socket;
 	}
@@ -45,11 +46,10 @@ public abstract class Listener implements Runnable{
             try {
 				socket.receive(msgPacket);
 				byte[] msg = Arrays.copyOfRange(msgPacket.getData(),msgPacket.getOffset(),msgPacket.getOffset()+msgPacket.getLength());
-				System.out.println("Received: "+new String(msg));
+				System.out.println("Packet Received");
 				Handler handler = HandlerFactory.getHandler(msg);
 				if (handler != null)
 				{
-					System.out.println("Starting handler");
 					new Thread(handler).start();
 				}
             } catch (IOException e) {

@@ -10,6 +10,7 @@ import messages.MessageBuilder;
 public class DBS {
 	
 	private static final String protocolVersion = "1.0";
+	public final static int CHUNK_SIZE = 64000;
 	
 	private static int id = 1;
 	

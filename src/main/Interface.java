@@ -3,6 +3,7 @@ import java.io.IOException;
 import java.util.Scanner;
 
 import tasks.Backup;
+import tasks.Restore;
 
 public class Interface {
 	public static void main(String[] args) {
@@ -22,7 +23,9 @@ public class Interface {
 					if (choice == 0) 
 						break;
 					else if (choice == 1)
-						new Thread(new Backup("1.zip",3)).start();
+						new Backup("imagem.png",1).run();
+					else if (choice == 2)
+						new Restore("imagem.png","16b82104e89286df8f8303ee810a74155412b4c678b1118d71e2e9406bdf23c2").run();
 				}
 				else scanner.next();
 			}

@@ -1,12 +1,5 @@
 package handlers;
 
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.io.StringReader;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -16,10 +9,8 @@ public class PutChunkHandler extends Handler {
 
 	// PUTCHUNK <Version> <SenderId> <FileId> <ChunkNo> <ReplicationDeg> <CRLF><CRLF><Body>
 	final private static Pattern pattern = Pattern.compile(
-			"PUTCHUNK(?: )+([0-9].[0-9])(?: )+([0-9]+)(?: )+(.{64})(?: )+([0-9]+)(?: )+([0-9]+)(?: )+\r\n",
+			"PUTCHUNK(?: )+([0-9]\\.[0-9])(?: )+([0-9]+)(?: )+(.{64})(?: )+([0-9]+)(?: )+([0-9]+)(?: )+.*?\r\n\r\n",
 			Pattern.DOTALL);
-	
-	final private static Pattern body_finder = Pattern.compile("^.+?\r\n\r\n",Pattern.DOTALL);
 	
 	public PutChunkHandler(String header, byte[] message) {
 		super(header,message);
@@ -47,17 +38,6 @@ public class PutChunkHandler extends Handler {
 			DBS.getMessageBuilder().sendStored(fileId,chunkNumber);
 		}
 		else System.out.println("Invalid PUTCHUNK received");
-	}
-	
-	byte[] getMessageBody()
-	{
-		Matcher matcher = body_finder.matcher(new String(message));
-		if (matcher.find())
-		{
-			int start = matcher.group(0).length();
-			return Arrays.copyOfRange(message, start, message.length);
-		}
-		return null;
 	}
 
 }

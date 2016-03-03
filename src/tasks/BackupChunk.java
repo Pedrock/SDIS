@@ -5,8 +5,8 @@ import messages.Chunk;
 
 public class BackupChunk implements Runnable{
 	
-	private final int INITIAL_SLEEP = 1000;
-	private final int MAX_TRIES = 5;
+	private static final int INITIAL_SLEEP = 1000;
+	private static final int MAX_TRIES = 5;
 	
 	private Chunk chunk;
 	
@@ -34,6 +34,10 @@ public class BackupChunk implements Runnable{
 		if (!success)
 		{
 			System.out.println("Replication degree not achieved");
+		}
+		else
+		{
+			System.out.println("Chunk backed up succesfully");
 		}
 	}
 }

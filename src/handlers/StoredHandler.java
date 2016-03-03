@@ -8,10 +8,10 @@ import main.DBS;
 public class StoredHandler extends Handler {
 	
 	// STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-	final private static Pattern pattern = Pattern.compile("STORED(?: )+([0-9].[0-9])(?: )+([0-9]+)(?: )+(.{64})(?: )+([0-9]+)(?: )+\r\n");
+	final private static Pattern pattern = Pattern.compile("STORED(?: )+([0-9]\\.[0-9])(?: )+([0-9]+)(?: )+(.{64})(?: )+([0-9]+)(?: )*.*?\r\n\r\n");
 	
-	public StoredHandler(String header, byte[] message) {
-		super(header,message);
+	public StoredHandler(String header) {
+		super(header);
 	}
 
 	@Override

@@ -37,6 +37,15 @@ public class FileManager {
 		return path.resolve(filename).toFile();
 	}
 	
+	public byte[] getFileContents(String filename)
+	{
+		try {
+			return Files.readAllBytes(getFile(filename).toPath());
+		} catch (IOException e) {
+			return null;
+		}
+	}
+	
 	public boolean createFile(String filename, byte[] content)
 	{
 		try {

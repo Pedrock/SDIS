@@ -5,34 +5,34 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import messages.Chunk;
+import messages.ChunkID;
 
 public class McListener extends Listener {
 
-	HashMap<Chunk,HashSet<Integer>> storeCounter = new HashMap<Chunk,HashSet<Integer> >();
-	
+	HashMap<ChunkID,HashSet<Integer>> storeCounter = new HashMap<ChunkID,HashSet<Integer> >();
 	
 	public McListener(String address, int port) throws IOException {
 		super(address, port);
 	}
 	
-	public void listenToStored(Chunk chunk)
+	public synchronized void listenToStored(Chunk chunk)
 	{
-		storeCounter.put(chunk, new HashSet<Integer>());
+		storeCounter.put(chunk.getID(), new HashSet<Integer>());
 	}
 	
-	public int getStoredCount(Chunk chunk)
+	public synchronized int getStoredCount(Chunk chunk)
 	{
-		return storeCounter.get(chunk).size();
+		return storeCounter.get(chunk.getID()).size();
 	}
 	
-	public void stopListenToStored(Chunk chunk)
+	public synchronized void stopListenToStored(Chunk chunk)
 	{
-		storeCounter.remove(chunk);
+		storeCounter.remove(chunk.getID());
 	}
 
-	public void handleStored(int sender, String fileId, int chunkNumber) {
+	public synchronized void handleStored(int sender, String fileId, int chunkNumber) {
 		if (storeCounter.isEmpty()) return;
-		Chunk chunkId = new Chunk(fileId, chunkNumber);
+		ChunkID chunkId = new ChunkID(fileId, chunkNumber);
 		HashSet<Integer> set = storeCounter.get(chunkId);
 		if (set != null) storeCounter.get(chunkId).add(sender);
 	}
