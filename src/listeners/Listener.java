@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.util.Arrays;
 
 import handlers.Handler;
 import handlers.HandlerFactory;
@@ -11,7 +12,7 @@ import handlers.HandlerFactory;
 public abstract class Listener implements Runnable{
 	protected MulticastSocket socket;
 	protected InetAddress address;
-	protected byte[] buffer = new byte[256];
+	protected byte[] buffer = new byte[1024];
 	private int port;
 	
 	public Listener(String address, int port) throws IOException {
@@ -43,8 +44,8 @@ public abstract class Listener implements Runnable{
             DatagramPacket msgPacket = new DatagramPacket(buffer, buffer.length);
             try {
 				socket.receive(msgPacket);
-				String msg = new String(msgPacket.getData(),msgPacket.getOffset(),msgPacket.getLength());
-				System.out.println("Received: "+msg);
+				byte[] msg = Arrays.copyOfRange(msgPacket.getData(),msgPacket.getOffset(),msgPacket.getOffset()+msgPacket.getLength());
+				System.out.println("Received: "+new String(msg));
 				Handler handler = HandlerFactory.getHandler(msg);
 				if (handler != null)
 				{
@@ -52,7 +53,7 @@ public abstract class Listener implements Runnable{
 					new Thread(handler).start();
 				}
             } catch (IOException e) {
-				e.printStackTrace(); // TODO - remove print
+				e.printStackTrace();
 			}
         }
 	}

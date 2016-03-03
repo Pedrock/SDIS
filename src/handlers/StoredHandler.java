@@ -8,15 +8,15 @@ import main.DBS;
 public class StoredHandler extends Handler {
 	
 	// STORED <Version> <SenderId> <FileId> <ChunkNo> <CRLF><CRLF>
-	final private static Pattern pattern = Pattern.compile("STORED(?: )+([0-9].[0-9])(?: )+([0-9]+)(?: )+(.{64})(?: )+([0-9]+)(?: )+\r\n\r\n");
+	final private static Pattern pattern = Pattern.compile("STORED(?: )+([0-9].[0-9])(?: )+([0-9]+)(?: )+(.{64})(?: )+([0-9]+)(?: )+\r\n");
 	
-	public StoredHandler(String message) {
-		super(message);
+	public StoredHandler(String header, byte[] message) {
+		super(header,message);
 	}
 
 	@Override
 	public void run() {
-		Matcher matcher = pattern.matcher(message);
+		Matcher matcher = pattern.matcher(header);
 		if (matcher.matches())
 		{
 			int sender = Integer.parseInt(matcher.group(2));

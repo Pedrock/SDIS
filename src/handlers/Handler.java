@@ -1,10 +1,11 @@
 package handlers;
 
 public abstract class Handler implements Runnable {
-	protected String message;
+	protected byte[] message;
+	protected String header;
 	
-	public Handler(String message) {
+	public Handler(String header, byte[] message) {
+		this.header = header;
 		this.message = message;
-		System.out.println("Handler created for "+message); // TODO - debug
 	}
 }
