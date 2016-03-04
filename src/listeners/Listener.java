@@ -2,6 +2,7 @@ package listeners;
 
 import java.io.IOException;
 import java.net.DatagramPacket;
+import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
 import java.util.Arrays;
@@ -11,10 +12,11 @@ import handlers.HandlerFactory;
 import main.DBS;
 
 public abstract class Listener implements Runnable{
+	
 	protected MulticastSocket socket;
 	protected InetAddress address;
-	protected byte[] buffer = new byte[2*DBS.CHUNK_SIZE];
-	private int port;
+	protected byte[] buffer = new byte[DBS.MAX_CHUNK_SIZE];
+	protected int port;
 	
 	public Listener(String address, int port) throws IOException {
 		this.port = port;
@@ -24,19 +26,14 @@ public abstract class Listener implements Runnable{
 		socket.joinGroup(this.address);
 	}
 	
-	public synchronized InetAddress getAddress()
+	public InetAddress getAddress()
 	{
 		return address;
 	}
 	
-	public synchronized int getPort()
+	public int getPort()
 	{
 		return port;
-	}
-	
-	public synchronized MulticastSocket getSocket()
-	{
-		return socket;
 	}
 	
 	@Override
@@ -46,7 +43,7 @@ public abstract class Listener implements Runnable{
             try {
 				socket.receive(msgPacket);
 				byte[] msg = Arrays.copyOfRange(msgPacket.getData(),msgPacket.getOffset(),msgPacket.getOffset()+msgPacket.getLength());
-				System.out.println("Packet Received");
+				System.out.println("Packet Received: "+msg);
 				Handler handler = HandlerFactory.getHandler(msg);
 				if (handler != null)
 				{
@@ -56,6 +53,10 @@ public abstract class Listener implements Runnable{
 				e.printStackTrace();
 			}
         }
+	}
+
+	public DatagramSocket getSocket() {
+		return socket;
 	}
 	
 }

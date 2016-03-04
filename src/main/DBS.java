@@ -11,6 +11,7 @@ public class DBS {
 	
 	private static final String protocolVersion = "1.0";
 	public final static int CHUNK_SIZE = 64000;
+	public final static int MAX_CHUNK_SIZE = 65536;
 	
 	private static int id = 1;
 	

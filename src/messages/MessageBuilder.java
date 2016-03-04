@@ -11,10 +11,11 @@ import main.DBS;
 
 public class MessageBuilder {
 	
-	MulticastSocket socket;
+	private MulticastSocket socket;
 	
 	public MessageBuilder() throws IOException {
 		socket = new MulticastSocket();
+		socket.setTimeToLive(1);
 	}
 	
 	public void sendPutChunk(Chunk chunk)

@@ -8,8 +8,8 @@ import messages.ChunkID;
 
 public class MdrListener extends Listener {
 	
-	HashMap<ChunkID,Runnable> runnables = new HashMap<ChunkID,Runnable >();
-	HashMap<ChunkID,Chunk> chunks = new HashMap<ChunkID,Chunk >();
+	private volatile HashMap<ChunkID,Runnable> runnables = new HashMap<ChunkID,Runnable >();
+	private volatile HashMap<ChunkID,Chunk> chunks = new HashMap<ChunkID,Chunk >();
 	
 	public MdrListener(String address, int port) throws IOException {
 		super(address, port);
@@ -24,7 +24,6 @@ public class MdrListener extends Listener {
 			chunks.put(chunkId, chunk);
 			synchronized (runnable) {
 				runnable.notifyAll();
-				System.out.println("Waking up runnable");
 			}
 		}
 	}

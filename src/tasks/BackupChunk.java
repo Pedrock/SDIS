@@ -10,27 +10,34 @@ public class BackupChunk implements Runnable{
 	
 	private Chunk chunk;
 	
+	private boolean success = false;
+	
 	public BackupChunk(Chunk chunk) {
 		this.chunk = chunk;
+	}
+	
+	boolean wasSuccessful()
+	{
+		return success;
 	}
 
 	@Override
 	public void run() {
 		int sleep = INITIAL_SLEEP;
-		
-		DBS.getMcListener().listenToStored(chunk);
+		DBS.getMcListener().notifyOnStored(this, chunk);
 		boolean success = false;
 		for (int i = 0; i < MAX_TRIES && !success; i++)
 		{
 			DBS.getMessageBuilder().sendPutChunk(chunk);
-			try {
-				Thread.sleep(sleep);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
+			synchronized(this) {
+				try {
+					wait(sleep);
+				} catch (InterruptedException e) {}
 			}
 			sleep *= 2;
 			success = (DBS.getMcListener().getStoredCount(chunk) >= chunk.getReplicationDegree());
 		}
+		DBS.getMcListener().stopListenToStored(chunk);
 		if (!success)
 		{
 			System.out.println("Replication degree not achieved");
@@ -38,6 +45,7 @@ public class BackupChunk implements Runnable{
 		else
 		{
 			System.out.println("Chunk backed up succesfully");
+			this.success = true;
 		}
 	}
 }

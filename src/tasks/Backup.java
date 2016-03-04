@@ -31,15 +31,19 @@ public class Backup implements Runnable{
 		try (BufferedInputStream s = new BufferedInputStream(new FileInputStream(file)))
 		{
 			String fileId = localFM.generateFileHash(filename);
+			boolean success = true;
 			for (int n = 1; n <= chunks; n++)
 			{
 				long remaining_size = file_size - (n-1)*DBS.CHUNK_SIZE;
 				int chunk_size = (int)Math.min(DBS.CHUNK_SIZE, remaining_size);
 				byte[] chunk = new byte[chunk_size];
 				s.read(chunk);
-				new BackupChunk(new Chunk(fileId, n, chunk, replication)).run();
+				BackupChunk task = new BackupChunk(new Chunk(fileId, n, chunk, replication));
+				task.run();
+				success = success && task.wasSuccessful();
 			}
-			System.out.println("Backup finished succesfully");
+			if (success) System.out.println("Backup finished succesfully");
+			else System.out.println("Backup finished but the replication degree was not achieved");
 		} catch (FileNotFoundException e) {
 			System.err.println("File does not exist");
 		} catch (IOException e) {
