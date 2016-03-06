@@ -13,7 +13,7 @@ public class FileManager {
 	private Path path;
 	private MessageDigest md;
 	
-	public FileManager(String path_str) throws FileNotFoundException {
+	public FileManager(String path_str) throws IOException {
 		path = Paths.get(path_str);
 		try {
 			md = MessageDigest.getInstance("SHA-256");
@@ -21,10 +21,13 @@ public class FileManager {
 			e.printStackTrace();
 			return;
 		}
-		if (!Files.isDirectory(path))
+		
+		if (Files.exists(path))
 		{
-			throw new FileNotFoundException(path_str);
+			if (!Files.isDirectory(path))
+				throw new FileNotFoundException(path_str);
 		}
+		else Files.createDirectory(path);
 	}
 	
 	public boolean fileExists(String file)
@@ -35,6 +38,11 @@ public class FileManager {
 	public File getFile(String filename)
 	{
 		return path.resolve(filename).toFile();
+	}
+	
+	public String getChunkFilename(String fileId, int chunk)
+	{
+		return fileId+"-"+chunk;
 	}
 	
 	public byte[] getFileContents(String filename)

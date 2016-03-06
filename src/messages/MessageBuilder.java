@@ -34,7 +34,7 @@ public class MessageBuilder {
 		sendToMdb(message);
 	}
 	
-	public void sendStored(String fileId, String chunkNumber) {
+	public void sendStored(String fileId, int chunkNumber) {
 		byte[] message = buildHeader(
 				"STORED",
 				fileId,
@@ -61,6 +61,13 @@ public class MessageBuilder {
 				"GETCHUNK",
 				fileId,
 				chunkNumber);
+		sendToMc(message);
+	}
+	
+	public void sendDelete(String fileId) {
+		byte[] message = buildHeader(
+				"DELETE",
+				fileId);
 		sendToMc(message);
 	}
 	

@@ -10,6 +10,13 @@ public class ChunkID
 		this.fileId = fileId;
 	}
 	
+	
+	
+	@Override
+	public String toString() {
+		return fileId + "-" + number;
+	}
+
 	@Override
 	public int hashCode() {
 		final int prime = 31;

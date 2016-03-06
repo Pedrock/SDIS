@@ -25,8 +25,8 @@ public class Restore implements Runnable{
 	
 	@Override
 	public void run() {
-		FileManager localFM = DBS.getLocalFileManager();
-		File file = localFM.getFile(filename);
+		FileManager fm = DBS.getRestoredFileManager();
+		File file = fm.getFile(filename);
 		if (file.exists())
 		{
 			System.out.println("File already exists");
@@ -76,6 +76,7 @@ public class Restore implements Runnable{
 				}
 			}
 			while (chunk_size == DBS.CHUNK_SIZE);
+			DBS.getDatabase().addSentBackup(filename, fileId);
 			System.out.println("File restored successfully");	
 		} 
 		catch (IOException ex) {

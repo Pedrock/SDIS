@@ -1,9 +1,11 @@
 package handlers;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import main.DBS;
+import messages.ChunkID;
 
 public class PutChunkHandler extends Handler {
 
@@ -23,15 +25,16 @@ public class PutChunkHandler extends Handler {
 		{
 			System.out.println("Valid PUTCHUNK received");
 			String fileId = matcher.group(3);
-			String chunkNumber = matcher.group(4);
-			String filename = fileId+"-"+chunkNumber;
-			boolean file_exists = DBS.getBackupsFileManager().fileExists(filename);
-			if (!file_exists)
+			Integer chunkNumber = Integer.parseInt(matcher.group(4));
+			ChunkID chunkId = new ChunkID(fileId, chunkNumber);
+			File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
+			if (!file.exists())
 			{
 				byte[] content = getMessageBody();
 				if (content != null)
 				{
-					DBS.getBackupsFileManager().createFile(filename, content);
+					DBS.getBackupsFileManager().createFile(file.getName(), content);
+					DBS.getDatabase().addReceivedBackup(chunkId);
 					System.out.println("Chunk stored");
 				}
 			}

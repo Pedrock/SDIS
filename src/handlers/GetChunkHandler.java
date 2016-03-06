@@ -1,9 +1,11 @@
 package handlers;
 
+import java.io.File;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import main.DBS;
+import messages.ChunkID;
 
 public class GetChunkHandler extends Handler {
 
@@ -25,12 +27,11 @@ public class GetChunkHandler extends Handler {
 			//int sender = Integer.parseInt(matcher.group(2));
 			String fileId = matcher.group(3);
 			int chunkNumber = Integer.parseInt(matcher.group(4));
-			
-			String filename = fileId+"-"+chunkNumber;
-			boolean file_exists = DBS.getBackupsFileManager().fileExists(filename);
-			if (file_exists)
+			ChunkID chunkId = new ChunkID(fileId, chunkNumber);
+			File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
+			if (!file.exists())
 			{
-				byte[] content = DBS.getBackupsFileManager().getFileContents(filename);
+				byte[] content = DBS.getBackupsFileManager().getFileContents(file.getName());
 				if (content != null)
 				{
 					DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content);

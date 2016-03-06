@@ -1,6 +1,7 @@
 package main;
 import java.io.IOException;
 
+import filesystem.Database;
 import filesystem.FileManager;
 import listeners.McListener;
 import listeners.MdbListener;
@@ -21,8 +22,11 @@ public class DBS {
 	
 	private static FileManager localFM;
 	private static FileManager backupsFM;
+	private static FileManager restoredFM;
 	
 	private static MessageBuilder messageBuilder;
+	
+	private static Database database;
 	
 	DBS(String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
 		mcListener = new McListener(mc_addr, mc_port);
@@ -30,7 +34,9 @@ public class DBS {
 		mdrListener = new MdrListener(mdr_addr, mdr_port);
 		localFM = new FileManager("Files");
 		backupsFM = new FileManager("Backups");
+		restoredFM = new FileManager("Restored");
 		messageBuilder = new MessageBuilder();
+		database = new Database();
 	}
 	
 	DBS(int id, String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
@@ -79,9 +85,18 @@ public class DBS {
 		return backupsFM;
 	}
 	
+	public static FileManager getRestoredFileManager()
+	{
+		return restoredFM;
+	}
+	
 	public static MessageBuilder getMessageBuilder()
 	{
 		return messageBuilder;
 	}
 	
+	public static Database getDatabase()
+	{
+		return database;
+	}
 }

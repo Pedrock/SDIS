@@ -1,9 +1,13 @@
 package listeners;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Set;
 
+import filesystem.Database;
+import main.DBS;
 import messages.Chunk;
 import messages.ChunkID;
 
@@ -59,4 +63,21 @@ public class McListener extends Listener {
 			}
 		}
 	}
+
+	public synchronized void handleDelete(int sender, String fileId) {
+		Database db = DBS.getDatabase();
+		Set<Integer> chunksSet = db.getFileChunks(fileId);
+		Integer[] chunks = chunksSet.toArray(new Integer[chunksSet.size()]);
+		if (chunks != null)
+		{
+			for (Integer chunk : chunks) 
+			{
+				ChunkID chunkId = new ChunkID(fileId, chunk);
+				File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
+				file.delete();
+				db.removeReceivedBackup(chunkId);
+			}
+		}
+	}
+
 }

@@ -30,8 +30,10 @@ public class HandlerFactory {
 				return new GetChunkHandler(header);
 			case "CHUNK":
 				return new ChunkHandler(header,message);
+			case "DELETE":
+				return new DeleteHandler(header);
 			default:
-				// TODO
+				System.out.println("Handler unavailable");
 				return null;
 		}
 	}
