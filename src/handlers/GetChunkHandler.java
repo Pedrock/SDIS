@@ -1,6 +1,7 @@
 package handlers;
 
 import java.io.File;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,8 +35,23 @@ public class GetChunkHandler extends Handler {
 				byte[] content = DBS.getBackupsFileManager().getFileContents(file.getName());
 				if (content != null)
 				{
-					DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content);
-					System.out.println("CHUNK sent");
+					Random random = new Random();
+					int delay = random.nextInt(401); // [0,400]
+					
+					DBS.getMdrListener().notifyOnChunk(this, chunkId);
+					
+					synchronized(this) {
+						try {
+							wait(delay);
+						} catch (InterruptedException e) {}
+					}
+					
+					if (DBS.getMdrListener().getChunk(chunkId) == null)
+					{
+						DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content);
+						System.out.println("CHUNK sent");
+					}
+					
 				}
 			}
 			System.out.println("GETCHUNK handled succesfully");

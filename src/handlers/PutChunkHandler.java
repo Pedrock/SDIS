@@ -1,6 +1,7 @@
 package handlers;
 
 import java.io.File;
+import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -33,6 +34,11 @@ public class PutChunkHandler extends Handler {
 				byte[] content = getMessageBody();
 				if (content != null)
 				{
+					Random random = new Random();
+					int delay = random.nextInt(401); // [0,400]
+					try {
+						Thread.sleep(delay);
+					} catch (InterruptedException e) { }
 					DBS.getBackupsFileManager().createFile(file.getName(), content);
 					DBS.getDatabase().addReceivedBackup(chunkId);
 					System.out.println("Chunk stored");

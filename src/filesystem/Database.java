@@ -10,10 +10,14 @@ import messages.ChunkID;
 public class Database implements Serializable{
 	private static final long serialVersionUID = 4419138873746909853L;
 	
+	// Chunks received
 	private HashSet<ChunkID> receivedBackups = new HashSet<ChunkID>();
+	
+	// Chunks received per file
 	private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
 	
-	private HashMap<String, String> sentBackups = new HashMap<String, String>();
+	// Filename to set of fileIds
+	private HashMap<String, HashSet<String>> sentBackups = new HashMap<String, HashSet<String>>();
 	
 	public void addReceivedBackup(ChunkID chunkId)
 	{
@@ -30,7 +34,17 @@ public class Database implements Serializable{
 	
 	public void addSentBackup(String filename, String fileId)
 	{
-		sentBackups.put(filename, fileId);
+		Set<String> set = sentBackups.get(filename);
+		if (set == null) {
+			sentBackups.put(filename, new HashSet<String>());
+			set = sentBackups.get(filename);
+		}
+		set.add(fileId);
+	}
+	
+	public Set<String> getSentFileIds(String filename)
+	{
+		return sentBackups.get(filename);
 	}
 	
 	public void removeReceivedBackup(ChunkID chunkId)
