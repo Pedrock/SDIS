@@ -36,7 +36,9 @@ public class DBS {
 		backupsFM = new FileManager("Backups");
 		restoredFM = new FileManager("Restored");
 		messageBuilder = new MessageBuilder();
-		database = new Database();
+		database = Database.fromFile();
+		if (database == null)
+			database = new Database();
 	}
 	
 	DBS(int id, String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {

@@ -1,7 +1,12 @@
 package messages;
 
-public class ChunkID
+import java.io.Serializable;
+
+public class ChunkID implements Serializable
 {
+	private static final long serialVersionUID = 1522677172249931809L;
+	
+	
 	private int number;
 	private String fileId;
 	
@@ -9,8 +14,6 @@ public class ChunkID
 		this.number = number;
 		this.fileId = fileId;
 	}
-	
-	
 	
 	@Override
 	public String toString() {
