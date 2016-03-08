@@ -30,7 +30,7 @@ public class GetChunkHandler extends Handler {
 			int chunkNumber = Integer.parseInt(matcher.group(4));
 			ChunkID chunkId = new ChunkID(fileId, chunkNumber);
 			File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
-			if (!file.exists())
+			if (file.exists())
 			{
 				byte[] content = DBS.getBackupsFileManager().getFileContents(file.getName());
 				if (content != null)
@@ -50,6 +50,10 @@ public class GetChunkHandler extends Handler {
 					{
 						DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content);
 						System.out.println("CHUNK sent");
+					}
+					else
+					{
+						System.out.println("CHUNK not sent");
 					}
 					
 				}

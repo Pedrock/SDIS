@@ -88,7 +88,7 @@ public class Restore implements Runnable{
 		}
 		finally {
 			try {
-				stream.close();
+				if (stream != null) stream.close();
 			} catch (IOException e) {
 				e.printStackTrace();
 			}

@@ -27,9 +27,9 @@ public class Interface {
 					else if (choice == 1)
 						new Backup("imagem.png",1).run();
 					else if (choice == 2)
-						new Restore("imagem.png","16b82104e89286df8f8303ee810a74155412b4c678b1118d71e2e9406bdf23c2").run();
+						new Restore("imagem.png","0428750a077b18b6ed3aacd79bcf48687396b7deb2ddd525ee1c398edcbfa094").run();
 					else if (choice == 3)
-						new Delete("16b82104e89286df8f8303ee810a74155412b4c678b1118d71e2e9406bdf23c2").run();
+						new Delete("0428750a077b18b6ed3aacd79bcf48687396b7deb2ddd525ee1c398edcbfa094").run();
 				}
 				else scanner.next();
 			}
