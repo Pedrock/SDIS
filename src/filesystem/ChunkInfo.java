@@ -60,6 +60,7 @@ public class ChunkInfo implements Comparable<ChunkInfo>, Serializable {
 	
 	public int getOverReplication()
 	{
+		// TODO - if (replication == null) -1;
 		return peers.size() - replication;
 	}
 

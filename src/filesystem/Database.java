@@ -65,21 +65,34 @@ public class Database implements Serializable{
 		fileChunks.add(chunkId.getNumber());
 		ChunkInfo info = chunksInfo.get(chunkId);
 		if (info == null)
-		{
 			chunksInfo.put(chunkId,new ChunkInfo(size,replication));
-		}
 		else if (info.getSize() == null)
-		{
 			info.setInfo(size, replication);
-		}
 		receivedBackups.add(chunkId);
 		addChunkPeer(chunkId, DBS.getId());
+		saveToFile();
+	}
+	
+	public synchronized void addChunkInfo(ChunkID chunkId, int size, int replication)
+	{
+		ChunkInfo info = chunksInfo.get(chunkId);
+		if (info == null)
+			chunksInfo.put(chunkId,new ChunkInfo(size,replication));
+		else if (info.getSize() == null)
+			info.setInfo(size, replication);
 		saveToFile();
 	}
 	
 	public synchronized boolean hasBackup(ChunkID chunkID)
 	{
 		return receivedBackups.contains(chunkID);
+	}
+	
+	public synchronized int getChunkReplication(ChunkID chunkID)
+	{
+		ChunkInfo info = chunksInfo.get(chunkID);
+		if (info == null) return 0;
+		return info.getPeers().size();
 	}
 	
 	public synchronized long getTotalUsedSpace()

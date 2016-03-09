@@ -36,13 +36,25 @@ public class PutChunkHandler extends Handler {
 				return;
 			}
 			
-			if (!DBS.getDatabase().hasBackup(chunkId))
+			boolean backed_up = DBS.getDatabase().hasBackup(chunkId);
+			long new_space_usage = DBS.getDatabase().getTotalUsedSpace() + content.length;
+			
+			if (!backed_up && new_space_usage > DBS.getBackupSpace())
 			{
-				if (DBS.getDatabase().getTotalUsedSpace()+content.length > DBS.getBackupSpace())
-				{
-					System.out.println("Can not store. Not enought free space.");
-					return;
-				}
+				System.out.println("Can not store. Not enought free space.");
+				return;
+			}
+			
+			Random random = new Random();
+			int delay = random.nextInt(401); // [0,400]
+			try {
+				Thread.sleep(delay);
+			} catch (InterruptedException e) { }
+			
+			int current_replication = DBS.getDatabase().getChunkReplication(chunkId);
+			
+			if (!backed_up && current_replication < replication)
+			{
 				File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
 				DBS.getDatabase().addReceivedBackup(chunkId, content.length, replication);
 				if (!file.exists())
@@ -50,14 +62,12 @@ public class PutChunkHandler extends Handler {
 					DBS.getBackupsFileManager().createFile(file.getName(), content);
 					System.out.println("Chunk stored");
 				}
+				backed_up = true;
 			}
-			Random random = new Random();
-			int delay = random.nextInt(401); // [0,400]
-			try {
-				Thread.sleep(delay);
-			} catch (InterruptedException e) { }
-			DBS.getMessageBuilder().sendStored(fileId,chunkNumber);
-			
+			if (backed_up)
+				DBS.getMessageBuilder().sendStored(fileId,chunkNumber);
+			else
+				DBS.getDatabase().addChunkInfo(chunkId, content.length, replication);
 		}
 		else System.out.println("Invalid PUTCHUNK received");
 	}
