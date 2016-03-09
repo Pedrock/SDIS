@@ -26,8 +26,7 @@ public class McListener extends Listener {
 		}
 	}
 
-	private volatile HashMap<ChunkID,StoredMapValue> storedMap = new HashMap<ChunkID,StoredMapValue >();
-	
+	private HashMap<ChunkID,StoredMapValue> storedMap = new HashMap<ChunkID,StoredMapValue >();
 	
 	public McListener(String address, int port) throws IOException {
 		super(address, port);
@@ -38,7 +37,7 @@ public class McListener extends Listener {
 		storedMap.put(chunk.getID(), new StoredMapValue(runnable,chunk.getReplicationDegree()));
 	}
 	
-	public synchronized int getStoredCount(Chunk chunk)
+	public synchronized Integer getStoredCount(Chunk chunk)
 	{
 		return storedMap.get(chunk.getID()).senders.size();
 	}
@@ -49,13 +48,14 @@ public class McListener extends Listener {
 	}
 
 	public synchronized void handleStored(int sender, String fileId, int chunkNumber) {
+		ChunkID chunkID = new ChunkID(fileId, chunkNumber);
+		DBS.getDatabase().addChunkPeer(chunkID, sender);
 		if (storedMap.isEmpty()) return;
-		ChunkID chunkId = new ChunkID(fileId, chunkNumber);
-		StoredMapValue info = storedMap.get(chunkId);
+		StoredMapValue info = storedMap.get(chunkID);
 		if (info != null)
 		{
 			info.senders.add(sender);
-			if (info.senders.size() >= info.replication) 
+			if (info.senders.size() >= info.replication)
 			{
 				synchronized (info.runnable) {
 					info.runnable.notifyAll();

@@ -10,7 +10,6 @@ import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-
 import messages.ChunkID;
 
 public class Database implements Serializable{
@@ -25,7 +24,29 @@ public class Database implements Serializable{
 	// Filename to set of fileIds
 	private HashMap<String, HashSet<String>> sentBackups = new HashMap<String, HashSet<String>>();
 	
-	public void addReceivedBackup(ChunkID chunkId)
+	// PeerIDs per chunk
+	private HashMap<ChunkID, HashSet<Integer>> storeds = new HashMap<ChunkID, HashSet<Integer>>();
+	
+	public synchronized void addChunkPeer(ChunkID chunkID, Integer peerID)
+	{
+		HashSet<Integer> set = storeds.get(chunkID);
+		if (set == null)
+		{
+			storeds.put(chunkID, new HashSet<Integer>());
+			set = storeds.get(chunkID);
+		}
+		set.add(peerID);
+		saveToFile();
+	}
+	
+	public synchronized int getChunkReplication(ChunkID chunkID)
+	{
+		HashSet<Integer> set = storeds.get(chunkID);
+		if (set == null) return 0;
+		return set.size();
+	}
+	
+	public synchronized void addReceivedBackup(ChunkID chunkId)
 	{
 		String fileId = chunkId.getFileId();
 		HashSet<Integer> fileChunks = receivedFilesMap.get(fileId);
@@ -39,7 +60,7 @@ public class Database implements Serializable{
 		saveToFile();
 	}
 	
-	public void addSentBackup(String filename, String fileId)
+	public synchronized void addSentBackup(String filename, String fileId)
 	{
 		Set<String> set = sentBackups.get(filename);
 		if (set == null) {
@@ -50,12 +71,12 @@ public class Database implements Serializable{
 		saveToFile();
 	}
 	
-	public Set<String> getSentFileIds(String filename)
+	public synchronized Set<String> getSentFileIds(String filename)
 	{
 		return sentBackups.get(filename);
 	}
 	
-	public void removeReceivedBackup(ChunkID chunkId)
+	public synchronized void removeReceivedBackup(ChunkID chunkId)
 	{
 		String fileId = chunkId.getFileId();
 		HashSet<Integer> chunks = receivedFilesMap.get(fileId);
@@ -66,14 +87,14 @@ public class Database implements Serializable{
 		saveToFile();
 	}
 	
-	public Set<Integer> getFileChunks(String fileId)
+	public synchronized Set<Integer> getFileChunks(String fileId)
 	{
 		Set<Integer> result = receivedFilesMap.get(fileId);
 		saveToFile();
 		return result;
 	}
 	
-	private void saveToFile()
+	private synchronized void saveToFile()
 	{
 		try (FileOutputStream fileOut = new FileOutputStream("database.db");)
 		{

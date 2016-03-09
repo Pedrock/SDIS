@@ -10,7 +10,7 @@ import messages.MessageBuilder;
 
 public class DBS {
 	
-	private static final String protocolVersion = "1.0";
+	private static final String PROTOCOL_VERSION = "1.0";
 	public final static int CHUNK_SIZE = 64000;
 	public final static int MAX_CHUNK_SIZE = 65536;
 	
@@ -59,7 +59,7 @@ public class DBS {
 	
 	public static String getProtocolVersion()
 	{
-		return protocolVersion;
+		return PROTOCOL_VERSION;
 	}
 	
 	public static McListener getMcListener()
