@@ -16,6 +16,8 @@ public class DBS {
 	
 	private static int id = 1;
 	
+	private static volatile long backup_space = 3200000;
+	
 	private static McListener mcListener;
 	private static MdbListener mdbListener;
 	private static MdrListener mdrListener;
@@ -100,5 +102,14 @@ public class DBS {
 	public static Database getDatabase()
 	{
 		return database;
+	}
+
+	public static long getBackupSpace() {
+		return backup_space;
+	}
+	
+	public static void setBackupSpace(long backup_space)
+	{
+		DBS.backup_space = backup_space;
 	}
 }

@@ -9,7 +9,12 @@ import java.io.ObjectOutputStream;
 import java.io.Serializable;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.Map.Entry;
 import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
+
+import main.DBS;
 import messages.ChunkID;
 
 public class Database implements Serializable{
@@ -18,35 +23,37 @@ public class Database implements Serializable{
 	// Chunks received
 	private HashSet<ChunkID> receivedBackups = new HashSet<ChunkID>();
 	
-	// Chunks received per file
+	// Chunks received per fileId
 	private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
 	
-	// Filename to set of fileIds
+	// FileIds per filename
 	private HashMap<String, HashSet<String>> sentBackups = new HashMap<String, HashSet<String>>();
 	
-	// PeerIDs per chunk
-	private HashMap<ChunkID, HashSet<Integer>> storeds = new HashMap<ChunkID, HashSet<Integer>>();
+	// Every known chunk information
+	private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
 	
 	public synchronized void addChunkPeer(ChunkID chunkID, Integer peerID)
 	{
-		HashSet<Integer> set = storeds.get(chunkID);
-		if (set == null)
+		ChunkInfo info = chunksInfo.get(chunkID);
+		if (info == null)
 		{
-			storeds.put(chunkID, new HashSet<Integer>());
-			set = storeds.get(chunkID);
+			info = new ChunkInfo();
+			chunksInfo.put(chunkID, info);
 		}
-		set.add(peerID);
+		info.getPeers().add(peerID);
 		saveToFile();
 	}
 	
-	public synchronized int getChunkReplication(ChunkID chunkID)
-	{
-		HashSet<Integer> set = storeds.get(chunkID);
-		if (set == null) return 0;
-		return set.size();
+	public void removeChunkPeer(ChunkID chunkID, int sender) {
+		ChunkInfo info = chunksInfo.get(chunkID);
+		if (info != null)
+		{
+			info.getPeers().remove(sender);
+			saveToFile();
+		}
 	}
 	
-	public synchronized void addReceivedBackup(ChunkID chunkId)
+	public synchronized void addReceivedBackup(ChunkID chunkId, int size, int replication)
 	{
 		String fileId = chunkId.getFileId();
 		HashSet<Integer> fileChunks = receivedFilesMap.get(fileId);
@@ -56,9 +63,52 @@ public class Database implements Serializable{
 			fileChunks = receivedFilesMap.get(fileId);
 		}
 		fileChunks.add(chunkId.getNumber());
+		ChunkInfo info = chunksInfo.get(chunkId);
+		if (info == null)
+		{
+			chunksInfo.put(chunkId,new ChunkInfo(size,replication));
+		}
+		else if (info.getSize() == null)
+		{
+			info.setInfo(size, replication);
+		}
 		receivedBackups.add(chunkId);
+		addChunkPeer(chunkId, DBS.getId());
 		saveToFile();
 	}
+	
+	public synchronized boolean hasBackup(ChunkID chunkID)
+	{
+		return receivedBackups.contains(chunkID);
+	}
+	
+	public synchronized long getTotalUsedSpace()
+	{
+		long sum = 0;
+		for (ChunkID chunkID : receivedBackups)
+		{
+			sum += chunksInfo.get(chunkID).getSize();
+		}
+		return sum;
+	}
+	
+	@SuppressWarnings("unchecked")
+	private synchronized HashMap<ChunkID, ChunkInfo> cloneChunksInfo()
+	{
+		return (HashMap<ChunkID, ChunkInfo>)chunksInfo.clone();
+	}
+	
+	public SortedSet<ChunkInfo> getSortedChunksInfo()
+	{
+		SortedSet<ChunkInfo> result = new TreeSet<ChunkInfo>();
+		HashMap<ChunkID, ChunkInfo> map = cloneChunksInfo();
+		for (Entry<ChunkID, ChunkInfo> entry : map.entrySet())
+		{
+			result.add(new ChunkInfo(entry.getKey(), entry.getValue()));
+		}
+		return result;
+	}
+	
 	
 	public synchronized void addSentBackup(String filename, String fileId)
 	{
@@ -76,14 +126,18 @@ public class Database implements Serializable{
 		return sentBackups.get(filename);
 	}
 	
-	public synchronized void removeReceivedBackup(ChunkID chunkId)
+	public synchronized void removeReceivedBackup(ChunkID chunkId, boolean isDelete)
 	{
 		String fileId = chunkId.getFileId();
 		HashSet<Integer> chunks = receivedFilesMap.get(fileId);
 		if (chunks == null) return;
 		chunks.remove(chunkId.getNumber());
-		if (chunks.isEmpty()) receivedFilesMap.remove(fileId);
+		if (chunks.isEmpty())
+			receivedFilesMap.remove(fileId);
+		if (isDelete)
+			chunksInfo.remove(chunkId);
 		receivedBackups.remove(chunkId);
+		removeChunkPeer(chunkId, DBS.getId());
 		saveToFile();
 	}
 	

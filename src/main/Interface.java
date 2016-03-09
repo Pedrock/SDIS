@@ -5,6 +5,7 @@ import java.util.Scanner;
 import tasks.Backup;
 import tasks.Delete;
 import tasks.Restore;
+import tasks.SpaceReclaiming;
 
 public class Interface {
 	public static void main(String[] args) {
@@ -18,7 +19,7 @@ public class Interface {
 			boolean end = false;
 			while (!end)
 			{
-				System.out.println("Choose: 0:Exit, 1:Backup, 2:Restore, 3:Delete, ... ");
+				System.out.println("Choose: 0:Exit, 1:Backup, 2:Restore, 3:Delete, 4: Reclaim space");
 				if (scanner.hasNextInt())
 				{
 					int choice = scanner.nextInt();
@@ -30,6 +31,8 @@ public class Interface {
 						new Restore("imagem.png","0428750a077b18b6ed3aacd79bcf48687396b7deb2ddd525ee1c398edcbfa094").run();
 					else if (choice == 3)
 						new Delete("0428750a077b18b6ed3aacd79bcf48687396b7deb2ddd525ee1c398edcbfa094").run();
+					else if (choice == 4 && scanner.hasNextInt())
+						new SpaceReclaiming(scanner.nextInt()).run();
 				}
 				else scanner.next();
 			}

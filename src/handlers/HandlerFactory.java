@@ -32,6 +32,8 @@ public class HandlerFactory {
 				return new ChunkHandler(header,message);
 			case "DELETE":
 				return new DeleteHandler(header);
+			case "REMOVED":
+				return new RemovedHandler(header);
 			default:
 				System.out.println("Handler unavailable");
 				return null;
