@@ -1,6 +1,7 @@
 package tasks;
 
 import java.io.File;
+import java.util.Random;
 import java.util.SortedSet;
 
 import filesystem.ChunkInfo;
@@ -31,6 +32,13 @@ public class SpaceReclaiming implements Runnable {
 				file.delete();
 				DBS.getDatabase().removeReceivedBackup(chunkID, false);
 				usedSpace -= info.getSize();
+				
+				Random random = new Random();
+				int delay = random.nextInt(201); // [0,200]
+				try {
+					Thread.sleep(delay);
+				} catch (InterruptedException e) { }
+				DBS.getMessageBuilder().sendRemoved(chunkID.getFileId(),chunkID.getNumber());
 			}
 			else
 			{

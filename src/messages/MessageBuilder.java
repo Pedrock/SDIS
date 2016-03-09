@@ -71,6 +71,14 @@ public class MessageBuilder {
 		sendToMc(message);
 	}
 	
+	public void sendRemoved(String fileId, int chunkNumber) {
+		byte[] message = buildHeader(
+				"REMOVED",
+				fileId,
+				chunkNumber);
+		sendToMc(message);
+	}
+	
 	private byte[] buildHeader(String messageType, Object... args)
 	{
 		StringBuilder sb = new StringBuilder();
