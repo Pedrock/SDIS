@@ -9,6 +9,8 @@ import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
+import messages.ChunkID;
+
 public class FileManager {
 	private Path path;
 	private MessageDigest md;
@@ -40,11 +42,6 @@ public class FileManager {
 		return path.resolve(filename).toFile();
 	}
 	
-	public String getChunkFilename(String fileId, int chunk)
-	{
-		return fileId+"-"+chunk;
-	}
-	
 	public byte[] getFileContents(String filename)
 	{
 		try {
@@ -52,6 +49,11 @@ public class FileManager {
 		} catch (IOException e) {
 			return null;
 		}
+	}
+	
+	public byte[] getChunkContent(ChunkID chunkID)
+	{
+		return getFileContents(chunkID.toString());
 	}
 	
 	public boolean createFile(String filename, byte[] content)

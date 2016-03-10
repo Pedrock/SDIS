@@ -11,6 +11,12 @@ public class Chunk {
 		this.chunkData = chunkData;
 		this.replication = replication;
 	}
+	
+	public Chunk(ChunkID chunkID, byte[] chunkData, int replication) {
+		this.id = chunkID;
+		this.chunkData = chunkData;
+		this.replication = replication;
+	}
 
 	public int getNumber()
 	{

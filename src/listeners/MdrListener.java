@@ -8,8 +8,8 @@ import messages.ChunkID;
 
 public class MdrListener extends Listener {
 	
-	private volatile HashMap<ChunkID,Runnable> runnables = new HashMap<ChunkID,Runnable >();
-	private volatile HashMap<ChunkID,Chunk> chunks = new HashMap<ChunkID,Chunk >();
+	private HashMap<ChunkID,Runnable> runnables = new HashMap<ChunkID,Runnable >();
+	private HashMap<ChunkID,Chunk> chunks = new HashMap<ChunkID,Chunk >();
 	
 	public MdrListener(String address, int port) throws IOException {
 		super(address, port);

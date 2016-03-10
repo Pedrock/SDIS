@@ -88,11 +88,18 @@ public class Database implements Serializable{
 		return receivedBackups.contains(chunkID);
 	}
 	
-	public synchronized int getChunkReplication(ChunkID chunkID)
+	public synchronized int getChunkCurrentReplication(ChunkID chunkID)
 	{
 		ChunkInfo info = chunksInfo.get(chunkID);
 		if (info == null) return 0;
 		return info.getPeers().size();
+	}
+	
+	public synchronized Integer getChunkDesiredReplication(ChunkID chunkID)
+	{
+		ChunkInfo info = chunksInfo.get(chunkID);
+		if (info == null) return null;
+		return info.getDesiredReplication();
 	}
 	
 	public synchronized long getTotalUsedSpace()
@@ -111,13 +118,14 @@ public class Database implements Serializable{
 		return (HashMap<ChunkID, ChunkInfo>)chunksInfo.clone();
 	}
 	
-	public SortedSet<ChunkInfo> getSortedChunksInfo()
+	public SortedSet<ChunkInfo> getBackupChunksInfo()
 	{
 		SortedSet<ChunkInfo> result = new TreeSet<ChunkInfo>();
 		HashMap<ChunkID, ChunkInfo> map = cloneChunksInfo();
 		for (Entry<ChunkID, ChunkInfo> entry : map.entrySet())
 		{
-			result.add(new ChunkInfo(entry.getKey(), entry.getValue()));
+			if (receivedBackups.contains(entry.getKey()))
+				result.add(new ChunkInfo(entry.getKey(), entry.getValue()));
 		}
 		return result;
 	}
