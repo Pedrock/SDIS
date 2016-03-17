@@ -17,12 +17,17 @@ class TestApp {
     	sub_protocols.put("delete", 1);
     	sub_protocols.put("reclaim", 1);
     }
+    
+    private static void printUsage()
+    {
+    	System.out.println("Usage: java TestApp <peer_ap> <sub_protocol> <opnd_1> [opnd_2]");
+    }
 	
 	public static void main(String[] args) {
 		if (args.length < 3 || args.length > 4
 				|| !sub_protocols.get(args[1].toLowerCase()).equals(args.length-2))
 		{
-			System.out.println("Usage: java TestApp <peer_ap> <sub_protocol> <opnd_1> [opnd_2]");
+			printUsage();
 			return;
 		}
 		
@@ -53,6 +58,9 @@ class TestApp {
 			case "reclaim":
 				stub.restore(args[2]);
 				break;
+			default:
+				printUsage();
+				return;
 			}
 		} catch (Exception e) {
 			System.err.println("Client exception: " + e.toString());
