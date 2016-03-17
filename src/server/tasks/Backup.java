@@ -42,6 +42,7 @@ public class Backup implements Runnable{
 				task.run();
 				success = success && task.wasSuccessful();
 			}
+			DBS.getDatabase().addSentBackup(filename, fileId);
 			if (success) System.out.println("Backup finished succesfully");
 			else System.out.println("Backup finished but the replication degree was not achieved");
 		} catch (FileNotFoundException e) {

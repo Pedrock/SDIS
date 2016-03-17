@@ -88,7 +88,6 @@ public class Restore implements Runnable{
 				}
 			}
 			while (chunk_size == DBS.CHUNK_SIZE);
-			DBS.getDatabase().addSentBackup(filename, fileId);
 			System.out.println("File restored successfully");	
 		} 
 		catch (IOException ex) {
