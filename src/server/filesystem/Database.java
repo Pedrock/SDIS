@@ -33,6 +33,9 @@ public class Database implements Serializable{
 	// Every known chunk information
 	private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
 	
+	// Set of files owned by this peer
+	private HashSet<String> myFiles = new HashSet<String>();
+	
 	public synchronized void addChunkPeer(ChunkID chunkID, Integer peerID)
 	{
 		ChunkInfo info = chunksInfo.get(chunkID);
@@ -119,6 +122,16 @@ public class Database implements Serializable{
 		return (HashMap<ChunkID, ChunkInfo>)chunksInfo.clone();
 	}
 	
+	public void resetChunkReplication(ChunkID chunkID)
+	{
+		ChunkInfo info = chunksInfo.get(chunkID);
+		info.resetReplication();
+		if (receivedBackups.contains(chunkID))
+		{
+			addChunkPeer(chunkID, DBS.getId());
+		}
+	}
+	
 	public SortedSet<ChunkInfo> getBackupChunksInfo()
 	{
 		SortedSet<ChunkInfo> result = new TreeSet<ChunkInfo>();
@@ -140,7 +153,13 @@ public class Database implements Serializable{
 			list = sentBackups.get(filename);
 		}
 		list.add(fileId);
+		myFiles.add(fileId);
 		saveToFile();
+	}
+	
+	public synchronized boolean isMyFile(String fileId)
+	{
+		return myFiles.contains(fileId);
 	}
 	
 	public synchronized String getLastSentFileId(String filename)

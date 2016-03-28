@@ -1,0 +1,15 @@
+** Backup subprotocol
+	"Ouve" os STOREDs e só guarda o chunk se não tiver sido atingido o nivel de replicação desejado.
+	
+** Chunk Restore subprotocol
+	Os chunks são enviados por UDP unicast e só são enviados com a probabilidade de 1/replicação.
+	
+** File Deletion subprotocol
+
+** Space Reclaiming subprotocol
+	O initiator envia o REMOVED, reenicia a contagem de replicação e envia PUTCHUNKs para garantir a replicação.
+	Se não conseguir envia um STORED para atualizar a replicação nos outros peers.
+	Só apaga os chunks se conseguir garantir o nivel de replicação desejado.
+	
+	
+	

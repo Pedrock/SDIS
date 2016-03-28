@@ -89,4 +89,8 @@ public class ChunkInfo implements Comparable<ChunkInfo>, Serializable {
 		result = prime * result + ((size == null) ? 0 : size.hashCode());
 		return result;
 	}
+
+	public void resetReplication() {
+		peers.clear();
+	}
 }

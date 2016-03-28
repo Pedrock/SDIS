@@ -42,7 +42,7 @@ public class MessageBuilder {
 		sendToMc(message);
 	}
 	
-	public void sendChunk(String fileId, int chunkNumber, byte[] body)
+	public void sendChunk(String fileId, int chunkNumber, byte[] body, InetAddress address, int port)
 	{
 		byte[] header = buildHeader(
 				"CHUNK",
@@ -110,10 +110,13 @@ public class MessageBuilder {
 		sendPacket(DBS.getMdrListener(), message);
 	}
 	
-	private synchronized void sendPacket(Listener listener, byte[] message)
+	private void sendPacket(Listener listener, byte[] message)
 	{
-		InetAddress address = listener.getAddress();
-		int port = listener.getPort();
+		sendPacket(listener.getAddress(),listener.getPort(),message);
+	}
+	
+	private synchronized void sendPacket(InetAddress address, int port, byte[] message)
+	{
 		DatagramPacket packet = new DatagramPacket(message,message.length,address,port);
 		try {
 			socket.send(packet);

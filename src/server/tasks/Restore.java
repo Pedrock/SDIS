@@ -13,8 +13,8 @@ import server.messages.ChunkID;
 
 public class Restore implements Runnable{
 	
-	private static final int INITIAL_SLEEP = 1000;
-	private static final int MAX_TRIES = 5;
+	private static final int INITIAL_SLEEP = 500;
+	private static final int MAX_TRIES = 6;
 	
 	private String filename;
 	private String fileId;

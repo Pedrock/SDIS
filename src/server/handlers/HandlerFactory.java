@@ -1,5 +1,6 @@
 package server.handlers;
 
+import java.net.InetAddress;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -12,7 +13,7 @@ public class HandlerFactory {
 			"^(\\S+)(?: )+([0-9]\\.[0-9])(?: )+(\\S+)(?: ).+?\r\n\r\n",
 			Pattern.DOTALL);
 	
-	public static synchronized Handler getHandler(byte[] message)
+	public static synchronized Handler getHandler(byte[] message, InetAddress address, int port)
 	{
 		Matcher matcher = pattern.matcher(new String(message));
 		if (!matcher.find()) return null;
@@ -27,7 +28,7 @@ public class HandlerFactory {
 			case "STORED":
 				return new StoredHandler(header);
 			case "GETCHUNK":
-				return new GetChunkHandler(header);
+				return new GetChunkHandler(header,address,port);
 			case "CHUNK":
 				return new ChunkHandler(header,message);
 			case "DELETE":

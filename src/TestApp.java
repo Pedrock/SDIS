@@ -53,10 +53,10 @@ class TestApp {
 				stub.restore(args[2]);
 				break;
 			case "delete":
-				stub.restore(args[2]);
+				stub.delete(args[2]);
 				break;
 			case "reclaim":
-				stub.restore(args[2]);
+				stub.spaceReclaiming(Long.parseLong(args[2]));
 				break;
 			default:
 				printUsage();

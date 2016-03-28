@@ -25,11 +25,15 @@ public class PutChunkHandler extends Handler {
 		if (matcher.matches())
 		{
 			System.out.println("Valid PUTCHUNK received");
-			Integer senderID = Integer.parseInt(matcher.group(2));
+			
 			String fileId = matcher.group(3);
+			if (DBS.getDatabase().isMyFile(fileId)) return;
+			
+			Integer senderID = Integer.parseInt(matcher.group(2));
 			Integer chunkNumber = Integer.parseInt(matcher.group(4));
 			Integer replication = Integer.parseInt(matcher.group(5));
 			ChunkID chunkId = new ChunkID(fileId, chunkNumber);
+			
 			byte[] content = getMessageBody();
 			DBS.getMdbListener().handlePutChunk(senderID, fileId, chunkNumber, content);
 			if (content == null)

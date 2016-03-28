@@ -30,15 +30,27 @@ public class SpaceReclaiming implements Runnable {
 			ChunkID chunkID = info.getChunkID();
 			
 			DBS.getMessageBuilder().sendRemoved(chunkID.getFileId(),chunkID.getNumber());
+			
+			try {
+				Thread.sleep(400);
+			} catch (InterruptedException e1) {
+				e1.printStackTrace();
+			}
+			
+			byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
+			Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
+			
+			DBS.getDatabase().resetChunkReplication(chunkID);
+			
+			new BackupChunk(chunk).run();
+			
 			if (info.getOverReplication() > 0)
 			{
 				usedSpace -= deleteChunk(info);
 			}
 			else
 			{
-				Integer size = handleLowReplication(info);
-				if (size != null) usedSpace -= size;
-				else return;
+				DBS.getMessageBuilder().sendStored(chunkID.getFileId(), chunkID.getNumber());
 			}
 			
 			int delay = random.nextInt(51); // [0,50]
@@ -46,7 +58,10 @@ public class SpaceReclaiming implements Runnable {
 				Thread.sleep(delay);
 			} catch (InterruptedException e) { }
 		}
-		System.out.println("Space reclaimed successfully.");
+		if (usedSpace <= backup_space)
+			System.out.println("Space reclaimed successfully.");
+		else
+			System.out.println("Space could not be fully reclaimed due to low replication degrees.");
 	}
 	
 	private int deleteChunk(ChunkInfo info)
@@ -56,34 +71,5 @@ public class SpaceReclaiming implements Runnable {
 		file.delete();
 		DBS.getDatabase().removeReceivedBackup(chunkID, false);
 		return info.getSize();
-	}
-	
-	private Integer handleLowReplication(ChunkInfo info)
-	{
-		ChunkID chunkID = info.getChunkID();
-		DBS.getMdbListener().notifyOnPutChunk(this, chunkID);
-		
-		int delay = random.nextInt(501); // [0,500]
-		synchronized(this) {
-			try {
-				wait(delay);
-			} catch (InterruptedException e) {}
-		}
-		
-		int replication = info.getDesiredReplication();
-		
-		if (!DBS.getMdbListener().putChunkReceived(chunkID))
-		{
-			System.out.println("Sending chunk content for: "+chunkID);
-			byte[] data = DBS.getBackupsFileManager().getChunkContent(chunkID);
-			new BackupChunk(new Chunk(chunkID, data, replication)).run();
-		}
-		
-		if (DBS.getDatabase().getChunkCurrentReplication(chunkID) < replication)
-		{
-			System.out.println("Could not complete space reclaiming, not enough replication.");
-			return null;
-		}
-		return deleteChunk(info);
 	}
 }
