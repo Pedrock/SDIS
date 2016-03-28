@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.activation.UnknownObjectException;
-import java.util.Set;
 import java.util.concurrent.TimeoutException;
 
 import server.filesystem.FileManager;
@@ -22,12 +21,12 @@ public class Restore implements Runnable{
 	
 	public Restore(String filename) throws UnknownObjectException {
 		this.filename = filename;
-		Set<String> ids = DBS.getDatabase().getSentFileIds(filename);
-		if (ids == null || ids.isEmpty())
+		String id = DBS.getDatabase().getLastSentFileId(filename);
+		if (id == null)
 		{
 			throw new UnknownObjectException(filename);
 		}
-		this.fileId = ids.iterator().next();
+		this.fileId = id;
 	}
 	
 	public Restore(String filename, String filehash) {

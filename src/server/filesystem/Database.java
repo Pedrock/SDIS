@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map.Entry;
@@ -27,7 +28,7 @@ public class Database implements Serializable{
 	private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
 	
 	// FileIds per filename
-	private HashMap<String, HashSet<String>> sentBackups = new HashMap<String, HashSet<String>>();
+	private HashMap<String, ArrayList<String>> sentBackups = new HashMap<String, ArrayList<String>>();
 	
 	// Every known chunk information
 	private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
@@ -44,7 +45,7 @@ public class Database implements Serializable{
 		saveToFile();
 	}
 	
-	public void removeChunkPeer(ChunkID chunkID, int sender) {
+	public synchronized void removeChunkPeer(ChunkID chunkID, int sender) {
 		ChunkInfo info = chunksInfo.get(chunkID);
 		if (info != null)
 		{
@@ -133,18 +134,20 @@ public class Database implements Serializable{
 	
 	public synchronized void addSentBackup(String filename, String fileId)
 	{
-		Set<String> set = sentBackups.get(filename);
-		if (set == null) {
-			sentBackups.put(filename, new HashSet<String>());
-			set = sentBackups.get(filename);
+		ArrayList<String> list = sentBackups.get(filename);
+		if (list == null) {
+			sentBackups.put(filename, new ArrayList<String>());
+			list = sentBackups.get(filename);
 		}
-		set.add(fileId);
+		list.add(fileId);
 		saveToFile();
 	}
 	
-	public synchronized Set<String> getSentFileIds(String filename)
+	public synchronized String getLastSentFileId(String filename)
 	{
-		return sentBackups.get(filename);
+		ArrayList<String> list = sentBackups.get(filename);
+		if (list == null || list.isEmpty()) return null;
+		return list.get(list.size()-1);
 	}
 	
 	public synchronized void removeReceivedBackup(ChunkID chunkId, boolean isDelete)
