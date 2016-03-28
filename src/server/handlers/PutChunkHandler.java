@@ -7,6 +7,7 @@ import java.util.regex.Pattern;
 
 import server.main.DBS;
 import server.messages.ChunkID;
+import server.tasks.Delete;
 
 public class PutChunkHandler extends Handler {
 
@@ -32,7 +33,13 @@ public class PutChunkHandler extends Handler {
 			Integer senderID = Integer.parseInt(matcher.group(2));
 			Integer chunkNumber = Integer.parseInt(matcher.group(4));
 			Integer replication = Integer.parseInt(matcher.group(5));
-			ChunkID chunkId = new ChunkID(fileId, chunkNumber);
+			ChunkID chunkID = new ChunkID(fileId, chunkNumber);
+			
+			if (DBS.getDatabase().isMyDeletedFile(fileId))
+			{
+				new Thread(new Delete(chunkID)).start();
+				return;
+			}
 			
 			byte[] content = getMessageBody();
 			DBS.getMdbListener().handlePutChunk(senderID, fileId, chunkNumber, content);
@@ -42,7 +49,7 @@ public class PutChunkHandler extends Handler {
 				return;
 			}
 			
-			boolean backed_up = DBS.getDatabase().hasBackup(chunkId);
+			boolean backed_up = DBS.getDatabase().hasBackup(chunkID);
 			long new_space_usage = DBS.getDatabase().getTotalUsedSpace() + content.length;
 			
 			if (!backed_up && new_space_usage > DBS.getBackupSpace())
@@ -51,18 +58,20 @@ public class PutChunkHandler extends Handler {
 				return;
 			}
 			
+			DBS.getDatabase().resetChunkReplication(chunkID);
+			
 			Random random = new Random();
 			int delay = random.nextInt(401); // [0,400]
 			try {
 				Thread.sleep(delay);
 			} catch (InterruptedException e) { }
 			
-			int current_replication = DBS.getDatabase().getChunkCurrentReplication(chunkId);
+			int current_replication = DBS.getDatabase().getChunkCurrentReplication(chunkID);
 			
 			if (!backed_up && current_replication < replication)
 			{
-				File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
-				DBS.getDatabase().addReceivedBackup(chunkId, content.length, replication);
+				File file = DBS.getBackupsFileManager().getFile(chunkID.toString());
+				DBS.getDatabase().addReceivedBackup(chunkID, content.length, replication);
 				if (!file.exists())
 				{
 					DBS.getBackupsFileManager().createFile(file.getName(), content);
@@ -73,7 +82,7 @@ public class PutChunkHandler extends Handler {
 			if (backed_up)
 				DBS.getMessageBuilder().sendStored(fileId,chunkNumber);
 			else
-				DBS.getDatabase().addChunkInfo(chunkId, content.length, replication);
+				DBS.getDatabase().addChunkInfo(chunkID, content.length, replication);
 		}
 		else System.out.println("Invalid PUTCHUNK received");
 	}

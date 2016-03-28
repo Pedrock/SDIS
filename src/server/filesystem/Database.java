@@ -36,6 +36,9 @@ public class Database implements Serializable{
 	// Set of files owned by this peer
 	private HashSet<String> myFiles = new HashSet<String>();
 	
+	// Set of deleted files previously owned by this peer
+	private HashSet<String> myDeletedFiles = new HashSet<String>();
+	
 	public synchronized void addChunkPeer(ChunkID chunkID, Integer peerID)
 	{
 		ChunkInfo info = chunksInfo.get(chunkID);
@@ -125,7 +128,7 @@ public class Database implements Serializable{
 	public void resetChunkReplication(ChunkID chunkID)
 	{
 		ChunkInfo info = chunksInfo.get(chunkID);
-		info.resetReplication();
+		if (info != null) info.resetReplication();
 		if (receivedBackups.contains(chunkID))
 		{
 			addChunkPeer(chunkID, DBS.getId());
@@ -160,6 +163,19 @@ public class Database implements Serializable{
 	public synchronized boolean isMyFile(String fileId)
 	{
 		return myFiles.contains(fileId);
+	}
+	
+	public synchronized boolean isMyDeletedFile(String fileId) 
+	{
+		return myDeletedFiles.contains(fileId);
+	}
+	
+	public synchronized void deleteMyFile(String filename, String fileId)
+	{
+		myDeletedFiles.add(fileId);
+		sentBackups.remove(filename);
+		myFiles.remove(fileId);
+		saveToFile();
 	}
 	
 	public synchronized String getLastSentFileId(String filename)

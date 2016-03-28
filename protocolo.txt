@@ -5,6 +5,7 @@
 	Os chunks são enviados por UDP unicast e só são enviados com a probabilidade de 1/replicação.
 	
 ** File Deletion subprotocol
+	O dono dos ficheiros apagados sempre que "ouve" um REMOVED ou PUTCHUNK de um chunk desses ficheiro, manda DELETE.
 
 ** Space Reclaiming subprotocol
 	O initiator envia o REMOVED, reenicia a contagem de replicação e envia PUTCHUNKs para garantir a replicação.

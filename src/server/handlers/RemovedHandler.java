@@ -9,6 +9,7 @@ import server.main.DBS;
 import server.messages.Chunk;
 import server.messages.ChunkID;
 import server.tasks.BackupChunk;
+import server.tasks.Delete;
 
 public class RemovedHandler extends Handler {
 	
@@ -30,6 +31,12 @@ public class RemovedHandler extends Handler {
 			ChunkID chunkID = new ChunkID(fileId,chunkNumber);
 			
 			Database db = DBS.getDatabase();
+			
+			if (db.isMyDeletedFile(fileId))
+			{
+				new Thread(new Delete(chunkID)).start();
+				return;
+			}
 			
 			db.removeChunkPeer(chunkID, sender);
 			
