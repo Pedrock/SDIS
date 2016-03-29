@@ -43,7 +43,7 @@ class TestApp {
 		
 		try {
 			Registry registry = LocateRegistry.getRegistry(host);
-			ServerInterface stub = (ServerInterface) registry.lookup(remote_object_name);
+			PeerInterface stub = (PeerInterface) registry.lookup(remote_object_name);
 			switch (args[1].toLowerCase())
 			{
 			case "backup":

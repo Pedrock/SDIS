@@ -11,11 +11,11 @@ import server.tasks.Delete;
 import server.tasks.Restore;
 import server.tasks.SpaceReclaiming;
 
-class Server implements ServerInterface{
+class Peer implements PeerInterface{
 	
 	private DBS dbs;
 	
-	Server(String[] args) throws IOException
+	Peer(String[] args) throws IOException
 	{
 		Integer id = Integer.parseInt(args[0]);
 		Integer mc_port = Integer.parseInt(args[2]);
@@ -27,6 +27,7 @@ class Server implements ServerInterface{
 	private void start()
 	{
 		dbs.start();
+		System.out.println("Server started");
 	}
 	
 	public static void main(String[] args) {
@@ -36,9 +37,9 @@ class Server implements ServerInterface{
 		if (args.length == 7)
 		{
 			try {
-				Server server = new Server(args);
+				Peer server = new Peer(args);
 				remote_object_name = args[0];
-				ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(server,0);
+				PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(server,0);
 				Registry registry = LocateRegistry.getRegistry();
 				registry.bind(remote_object_name, stub);
 				server.start();
@@ -50,9 +51,9 @@ class Server implements ServerInterface{
 		{
 			try {
 				String[] default_args = {"1","224.0.0.0","4445","224.0.0.0","4446","224.0.0.0","4447"};
-				Server server = new Server(default_args);
+				Peer server = new Peer(default_args);
 				remote_object_name = default_args[0];
-				ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(server,0);
+				PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(server,0);
 				Registry registry = LocateRegistry.getRegistry();
 				registry.bind(remote_object_name, stub);
 				server.start();
@@ -64,9 +65,9 @@ class Server implements ServerInterface{
 		{
 			try {
 				String[] default_args = {args[0],"224.0.0.0","4445","224.0.0.0","4446","224.0.0.0","4447"};
-				Server server = new Server(default_args);
+				Peer server = new Peer(default_args);
 				remote_object_name = default_args[0];
-				ServerInterface stub = (ServerInterface) UnicastRemoteObject.exportObject(server,0);
+				PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(server,0);
 				Registry registry = LocateRegistry.getRegistry();
 				registry.bind(remote_object_name, stub);
 				server.start();
@@ -94,8 +95,6 @@ class Server implements ServerInterface{
 				
 			}
 		});
-		
-		System.out.println("Server started");
 	}
 
 	@Override
