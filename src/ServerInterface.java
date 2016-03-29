@@ -1,11 +1,10 @@
 
 
 import java.rmi.Remote;
-import java.rmi.RemoteException;
 
 interface ServerInterface extends Remote {
-	public void backup(String filename, int replication) throws RemoteException;
-	public void restore(String filename) throws RemoteException;
-	public void delete(String filename) throws RemoteException;
-	public void spaceReclaiming(long new_space) throws RemoteException;
+	public void backup(String filename, int replication) throws Exception;
+	public void restore(String filename) throws Exception;
+	public void delete(String filename) throws Exception;
+	public void spaceReclaiming(long new_space) throws Exception;
 }

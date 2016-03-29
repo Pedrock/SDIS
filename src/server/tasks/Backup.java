@@ -21,8 +21,8 @@ public class Backup implements Runnable{
 		this.replication = replication;
 	}
 	
-	@Override
-	public void run() {
+	public void runWithExceptions() throws Exception
+	{
 		FileManager localFM = DBS.getLocalFileManager();
 		File file = localFM.getFile(filename);
 		
@@ -44,12 +44,23 @@ public class Backup implements Runnable{
 			}
 			DBS.getDatabase().addSentBackup(filename, fileId);
 			if (success) System.out.println("Backup finished succesfully");
-			else System.out.println("Backup finished but the replication degree was not achieved");
+			else throw new Exception("Backup finished but the replication degree was not achieved");
 		} catch (FileNotFoundException e) {
-			System.err.println("File does not exist");
+			throw new Exception("File does not exist");
 		} catch (IOException e) {
-			System.err.println("Error while reading file");
-			e.printStackTrace();
+			throw new Exception("Error while reading file");
+		}
+	}
+	
+	@Override
+	public void run() {
+		try
+		{
+			runWithExceptions();
+		}
+		catch (Exception ex)
+		{
+			System.out.println(ex.getMessage());
 		}
 	}
 }

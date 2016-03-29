@@ -18,8 +18,8 @@ public class SpaceReclaiming implements Runnable {
 		this.backup_space = backup_space;
 	}
 	
-	
-	public void run() {
+	public void runWithExceptions() throws Exception
+	{
 		DBS.setBackupSpace(backup_space);
 		SortedSet<ChunkInfo> infos = DBS.getDatabase().getBackupChunksInfo();
 		long usedSpace = DBS.getDatabase().getTotalUsedSpace();
@@ -62,7 +62,19 @@ public class SpaceReclaiming implements Runnable {
 		if (usedSpace <= backup_space)
 			System.out.println("Space reclaimed successfully.");
 		else
-			System.out.println("Space could not be fully reclaimed due to low replication degrees.");
+			throw new Exception("Space could not be fully reclaimed due to low replication degrees.");
+	}
+	
+	@Override
+	public void run() {
+		try 
+		{
+			runWithExceptions();
+		}
+		catch (Exception ex)
+		{
+			System.out.println(ex.getMessage());
+		}
 	}
 	
 	private int deleteChunk(ChunkInfo info)

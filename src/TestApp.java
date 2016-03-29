@@ -48,23 +48,26 @@ class TestApp {
 			{
 			case "backup":
 				stub.backup(args[2], Integer.parseInt(args[3]));
+				System.out.println("Backup successful");
 				break;
 			case "restore":
 				stub.restore(args[2]);
+				System.out.println("Restore successful");
 				break;
 			case "delete":
 				stub.delete(args[2]);
+				System.out.println("Delete successful");
 				break;
 			case "reclaim":
 				stub.spaceReclaiming(Long.parseLong(args[2]));
+				System.out.println("Space reclaiming successful");
 				break;
 			default:
 				printUsage();
 				return;
 			}
 		} catch (Exception e) {
-			System.err.println("Client exception: " + e.toString());
-			e.printStackTrace();
+			System.err.println("Error: " + e.getMessage());
 		}
 	}
 }

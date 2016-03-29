@@ -1,6 +1,5 @@
 
 import java.io.IOException;
-import java.rmi.RemoteException;
 import java.rmi.activation.UnknownObjectException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -100,30 +99,30 @@ class Server implements ServerInterface{
 	}
 
 	@Override
-	public void backup(String filename, int replication) throws RemoteException {
-		new Backup(filename,replication).run();
+	public void backup(String filename, int replication) throws Exception {
+		new Backup(filename,replication).runWithExceptions();
 	}
 
 	@Override
-	public void restore(String filename) throws RemoteException {
+	public void restore(String filename) throws Exception {
 		try {
-			new Restore(filename).run();
+			new Restore(filename).runWithExceptions();
 		} catch (UnknownObjectException e) {
-			System.out.println("Unknown file");
+			throw new Exception("Unknown file");
 		}
 	}
 
 	@Override
-	public void delete(String filename) throws RemoteException {
+	public void delete(String filename) throws Exception {
 		try {
-			new Delete(filename);
+			new Delete(filename).runWithExceptions();
 		} catch (UnknownObjectException e) {
-			System.out.println("Unknown file");
+			throw new Exception("Unknown file");
 		}
 	}
 
 	@Override
-	public void spaceReclaiming(long new_space) throws RemoteException {
-		new SpaceReclaiming(new_space).run();
+	public void spaceReclaiming(long new_space) throws Exception {
+		new SpaceReclaiming(new_space).runWithExceptions();
 	}
 }

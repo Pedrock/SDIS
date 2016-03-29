@@ -21,8 +21,21 @@ public class Delete implements Runnable {
 	public Delete(ChunkID chunk) {
 		this.fileId = chunk.getFileId();
 	}
-
-	public void run() {
+	
+	public void runWithExceptions()
+	{
 		DBS.getMessageBuilder().sendDelete(fileId);
+	}
+	
+	@Override
+	public void run() {
+		try
+		{
+			runWithExceptions();
+		}
+		catch (Exception ex)
+		{
+			System.out.println(ex.getMessage());
+		}
 	}
 }

@@ -36,17 +36,26 @@ public class Restore implements Runnable{
 	
 	@Override
 	public void run() {
+		try
+		{
+			runWithExceptions();
+		}
+		catch(Exception ex) {
+			System.out.println(ex.getMessage());
+		}
+	}
+	
+	public void runWithExceptions() throws Exception {
 		FileManager fm = DBS.getRestoredFileManager();
 		File file = fm.getFile(filename);
 		if (file.exists())
 		{
-			System.out.println("File already exists");
-			return;
+			throw new Exception("File already exists");
 		}
 		receiveFile(file);
 	}
 	
-	void receiveFile(File file)
+	void receiveFile(File file) throws Exception
 	{
 		FileOutputStream stream = null;
 		try 
@@ -92,15 +101,16 @@ public class Restore implements Runnable{
 		catch (IOException ex) {
 			ex.printStackTrace();
 		} catch (TimeoutException e) {
-			System.out.println("Max number of tries reached. Restore failed.");
 			if (stream != null)
-				System.out.println("File was partially restored");
+				throw new Exception("Restore Failed. File was partially restored");
+			throw new Exception("Restore failed completely.");
 		}
 		finally {
 			try {
 				if (stream != null) stream.close();
 			} catch (IOException e) {
 				e.printStackTrace();
+				throw new Exception("Unexpected error");
 			}
 		}
 	}
