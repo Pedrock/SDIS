@@ -8,6 +8,9 @@ import server.messages.ChunkID;
 
 public class Delete implements Runnable {
 	
+	private static final int INITIAL_SLEEP = 500;
+	private static final int MAX_TRIES = 5;
+	
 	private String fileId;
 	
 	public Delete(String filename) throws UnknownObjectException {
@@ -25,8 +28,17 @@ public class Delete implements Runnable {
 	
 	public void runWithExceptions() throws Exception
 	{
-		DBS.getMessageBuilder().sendDelete(fileId);
-		if (!DBS.isRunning()) throw new PeerError("Server stopped");
+		int sleep = INITIAL_SLEEP;
+		for (int i = 0; i < MAX_TRIES; i++)
+		{
+			DBS.getMessageBuilder().sendDelete(fileId);
+			if (!DBS.isRunning()) throw new PeerError("Server stopped");
+			sleep *= 2;
+			try {
+				Thread.sleep(sleep);
+			} catch (InterruptedException e) {}
+			if (!DBS.isRunning()) throw new PeerError("Server stopped");
+		}
 	}
 	
 	@Override
