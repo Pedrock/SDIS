@@ -8,6 +8,7 @@ import java.util.concurrent.TimeoutException;
 
 import server.filesystem.FileManager;
 import server.main.DBS;
+import server.main.PeerError;
 import server.messages.Chunk;
 import server.messages.ChunkID;
 
@@ -50,7 +51,7 @@ public class Restore implements Runnable{
 		File file = fm.getFile(filename);
 		if (file.exists())
 		{
-			throw new Exception("File already exists");
+			throw new PeerError("File already exists");
 		}
 		receiveFile(file);
 	}
@@ -89,11 +90,13 @@ public class Restore implements Runnable{
 						if (stream == null) stream = new FileOutputStream(file);
 						stream.write(chunk.getChunkData());
 					}
+					if (!DBS.isRunning()) throw new PeerError("Server stopped");
 				}
 				if (n_try == 5)
 				{
 					throw new TimeoutException();
 				}
+				if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			}
 			while (chunk_size == DBS.CHUNK_SIZE);
 			System.out.println("File restored successfully");	
@@ -102,15 +105,15 @@ public class Restore implements Runnable{
 			ex.printStackTrace();
 		} catch (TimeoutException e) {
 			if (stream != null)
-				throw new Exception("Restore Failed. File was partially restored");
-			throw new Exception("Restore failed completely.");
+				throw new PeerError("Restore Failed. File was partially restored");
+			throw new PeerError("Restore failed completely.");
 		}
 		finally {
 			try {
 				if (stream != null) stream.close();
 			} catch (IOException e) {
 				e.printStackTrace();
-				throw new Exception("Unexpected error");
+				throw new PeerError("Unexpected error");
 			}
 		}
 	}

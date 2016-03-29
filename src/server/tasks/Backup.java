@@ -8,6 +8,7 @@ import java.io.IOException;
 
 import server.filesystem.FileManager;
 import server.main.DBS;
+import server.main.PeerError;
 import server.messages.Chunk;
 
 public class Backup implements Runnable{
@@ -41,14 +42,15 @@ public class Backup implements Runnable{
 				BackupChunk task = new BackupChunk(new Chunk(fileId, n, chunk, replication));
 				task.run();
 				success = success && task.wasSuccessful();
+				if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			}
 			DBS.getDatabase().addSentBackup(filename, fileId);
 			if (success) System.out.println("Backup finished succesfully");
-			else throw new Exception("Backup finished but the replication degree was not achieved");
+			else throw new PeerError("Backup finished but the replication degree was not achieved");
 		} catch (FileNotFoundException e) {
-			throw new Exception("File does not exist");
+			throw new PeerError("File does not exist");
 		} catch (IOException e) {
-			throw new Exception("Error while reading file");
+			throw new PeerError("Error while reading file");
 		}
 	}
 	

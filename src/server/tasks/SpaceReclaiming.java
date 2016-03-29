@@ -6,6 +6,7 @@ import java.util.SortedSet;
 
 import server.filesystem.ChunkInfo;
 import server.main.DBS;
+import server.main.PeerError;
 import server.messages.Chunk;
 import server.messages.ChunkID;
 
@@ -20,7 +21,7 @@ public class SpaceReclaiming implements Runnable {
 	
 	public void runWithExceptions() throws Exception
 	{
-		DBS.setBackupSpace(backup_space);
+		DBS.getDatabase().setBackupSpace(backup_space);
 		SortedSet<ChunkInfo> infos = DBS.getDatabase().getBackupChunksInfo();
 		long usedSpace = DBS.getDatabase().getTotalUsedSpace();
 		System.out.println(usedSpace);
@@ -36,7 +37,7 @@ public class SpaceReclaiming implements Runnable {
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
-			
+			if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
 			Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
 			
@@ -53,16 +54,17 @@ public class SpaceReclaiming implements Runnable {
 			{
 				DBS.getMessageBuilder().sendStored(chunkID.getFileId(), chunkID.getNumber());
 			}
-			
+			if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			int delay = random.nextInt(51); // [0,50]
 			try {
 				Thread.sleep(delay);
 			} catch (InterruptedException e) { }
+			if (!DBS.isRunning()) throw new PeerError("Server stopped");
 		}
 		if (usedSpace <= backup_space)
 			System.out.println("Space reclaimed successfully.");
 		else
-			throw new Exception("Space could not be fully reclaimed due to low replication degrees.");
+			throw new PeerError("Space could not be fully reclaimed due to low replication degrees.");
 	}
 	
 	@Override

@@ -3,6 +3,8 @@ import java.rmi.registry.Registry;
 import java.util.HashMap;
 import java.util.Map;
 
+import server.main.PeerError;
+
 class TestApp {
 	
 	private static String host;
@@ -67,7 +69,10 @@ class TestApp {
 				return;
 			}
 		} catch (Exception e) {
-			System.err.println("Error: " + e.getMessage());
+			if (e instanceof PeerError) 
+				System.err.println("Error: " + e.getMessage());
+			else 
+				e.printStackTrace();
 		}
 	}
 }

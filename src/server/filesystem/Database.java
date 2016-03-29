@@ -39,6 +39,22 @@ public class Database implements Serializable{
 	// Set of deleted files previously owned by this peer
 	private HashSet<String> myDeletedFiles = new HashSet<String>();
 	
+	private Long backup_space = 3200000L;
+	
+	public long getBackupSpace()
+	{
+		synchronized (backup_space) {
+			return backup_space;
+		}
+	}
+	
+	public void setBackupSpace(long backup_space)
+	{
+		synchronized (this.backup_space) {
+			this.backup_space = backup_space;
+		}
+	}
+	
 	public void addChunkPeer(ChunkID chunkID, Integer peerID)
 	{
 		synchronized (chunksInfo) {

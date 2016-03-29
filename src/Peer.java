@@ -6,6 +6,7 @@ import java.rmi.registry.Registry;
 import java.rmi.server.UnicastRemoteObject;
 
 import server.main.DBS;
+import server.main.PeerError;
 import server.tasks.Backup;
 import server.tasks.Delete;
 import server.tasks.Restore;
@@ -47,41 +48,13 @@ class Peer implements PeerInterface{
 				e.printStackTrace();
 			}
 		}
-		else if (args.length == 0)
-		{
-			try {
-				String[] default_args = {"1","224.0.0.0","4445","224.0.0.0","4446","224.0.0.0","4447"};
-				Peer server = new Peer(default_args);
-				remote_object_name = default_args[0];
-				PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(server,0);
-				Registry registry = LocateRegistry.getRegistry();
-				registry.bind(remote_object_name, stub);
-				server.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		else if (args.length == 1)
-		{
-			try {
-				String[] default_args = {args[0],"224.0.0.0","4445","224.0.0.0","4446","224.0.0.0","4447"};
-				Peer server = new Peer(default_args);
-				remote_object_name = default_args[0];
-				PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(server,0);
-				Registry registry = LocateRegistry.getRegistry();
-				registry.bind(remote_object_name, stub);
-				server.start();
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
 		else
 		{
 			 System.out.println("Invalid args");
 			 return;
 		}
 		
-		String remote_object_name2 = remote_object_name;
+		final String remote_object_name2 = remote_object_name;
 		
 		Runtime.getRuntime().addShutdownHook(new Thread() {
 			@Override
@@ -89,10 +62,12 @@ class Peer implements PeerInterface{
 				try {
 					Registry registry = LocateRegistry.getRegistry();
 					registry.unbind(remote_object_name2);
+					System.out.println("RMI object unbinded");
 				} catch (Exception e) {
-					e.printStackTrace();
 				}
-				
+				System.out.println("Please wait...");
+				DBS.stop();
+				System.out.println("Server closed");
 			}
 		});
 	}
@@ -107,7 +82,7 @@ class Peer implements PeerInterface{
 		try {
 			new Restore(filename).runWithExceptions();
 		} catch (UnknownObjectException e) {
-			throw new Exception("Unknown file");
+			throw new PeerError("Unknown file");
 		}
 	}
 
@@ -116,7 +91,7 @@ class Peer implements PeerInterface{
 		try {
 			new Delete(filename).runWithExceptions();
 		} catch (UnknownObjectException e) {
-			throw new Exception("Unknown file");
+			throw new PeerError("Unknown file");
 		}
 	}
 

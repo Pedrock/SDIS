@@ -16,11 +16,13 @@ public class DBS {
 	
 	private static int id = 1;
 	
-	private static volatile long backup_space = 3200000;
-	
 	private static McListener mcListener;
 	private static MdbListener mdbListener;
 	private static MdrListener mdrListener;
+	
+	private static Thread mcListenerThread;
+	private static Thread mdbListenerThread;
+	private static Thread mdrListenerThread;
 	
 	private static FileManager localFM;
 	private static FileManager backupsFM;
@@ -29,6 +31,8 @@ public class DBS {
 	private static MessageBuilder messageBuilder;
 	
 	private static Database database;
+	
+	private static volatile boolean running = false;
 	
 	DBS(String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
 		mcListener = new McListener(mc_addr, mc_port);
@@ -52,6 +56,31 @@ public class DBS {
 		new Thread(mcListener).start();
 		new Thread(mdbListener).start();
 		new Thread(mdrListener).start();
+		running = true;
+	}
+	
+	public static void stop()
+	{
+		running = false;
+		
+		mcListener.close();
+		mdbListener.close();
+		mdrListener.close();
+		
+		try {
+			mcListenerThread.join();
+		} catch (Exception e) { }
+		try {
+			mdbListenerThread.join();
+		} catch (Exception e) { }
+		try {
+			mdrListenerThread.join();
+		} catch (Exception e) { }
+	}
+	
+	public static boolean isRunning()
+	{
+		return running;
 	}
 	
 	public static int getId()
@@ -102,14 +131,5 @@ public class DBS {
 	public static Database getDatabase()
 	{
 		return database;
-	}
-
-	public static long getBackupSpace() {
-		return backup_space;
-	}
-	
-	public static void setBackupSpace(long backup_space)
-	{
-		DBS.backup_space = backup_space;
 	}
 }

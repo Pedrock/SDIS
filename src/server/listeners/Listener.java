@@ -5,6 +5,7 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.MulticastSocket;
+import java.net.SocketException;
 import java.util.Arrays;
 
 import server.handlers.Handler;
@@ -38,7 +39,7 @@ public abstract class Listener implements Runnable{
 	
 	@Override
 	public void run() {
-		while (true) {
+		while (DBS.isRunning()) {
             DatagramPacket msgPacket = new DatagramPacket(buffer, buffer.length);
             try {
 				socket.receive(msgPacket);
@@ -49,9 +50,15 @@ public abstract class Listener implements Runnable{
 					new Thread(handler).start();
 				}
             } catch (IOException e) {
-				e.printStackTrace();
+				if (!(e instanceof SocketException))
+					e.printStackTrace();
 			}
         }
+	}
+	
+	public void close()
+	{
+		socket.close();
 	}
 
 	public DatagramSocket getSocket() {

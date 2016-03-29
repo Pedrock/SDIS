@@ -3,6 +3,7 @@ package server.tasks;
 import java.rmi.activation.UnknownObjectException;
 
 import server.main.DBS;
+import server.main.PeerError;
 import server.messages.ChunkID;
 
 public class Delete implements Runnable {
@@ -22,9 +23,10 @@ public class Delete implements Runnable {
 		this.fileId = chunk.getFileId();
 	}
 	
-	public void runWithExceptions()
+	public void runWithExceptions() throws Exception
 	{
 		DBS.getMessageBuilder().sendDelete(fileId);
+		if (!DBS.isRunning()) throw new PeerError("Server stopped");
 	}
 	
 	@Override

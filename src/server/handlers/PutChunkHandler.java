@@ -52,7 +52,7 @@ public class PutChunkHandler extends Handler {
 			boolean backed_up = DBS.getDatabase().hasBackup(chunkID);
 			long new_space_usage = DBS.getDatabase().getTotalUsedSpace() + content.length;
 			
-			if (!backed_up && new_space_usage > DBS.getBackupSpace())
+			if (!backed_up && new_space_usage > DBS.getDatabase().getBackupSpace())
 			{
 				System.out.println("Can not store. Not enought free space.");
 				return;
