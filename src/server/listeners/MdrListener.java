@@ -15,26 +15,36 @@ public class MdrListener extends Listener {
 		super(address, port);
 	}
 	
-	public synchronized void handleChunk(int sender, String fileId, int chunkNumber, byte[] body) {
+	public void handleChunk(int sender, String fileId, int chunkNumber, byte[] body) {
 		ChunkID chunkId = new ChunkID(fileId, chunkNumber);
-		Runnable runnable = runnables.get(chunkId);
-		if (runnable != null)
-		{
-			Chunk chunk = new Chunk(fileId,chunkNumber,body,1);
-			chunks.put(chunkId, chunk);
-			synchronized (runnable) {
-				runnable.notifyAll();
+		synchronized (runnables) {
+			Runnable runnable = runnables.get(chunkId);
+			if (runnable != null)
+			{
+				Chunk chunk = new Chunk(fileId,chunkNumber,body,1);
+				synchronized (chunks) {
+					chunks.put(chunkId, chunk);
+					synchronized (runnable) {
+						runnable.notifyAll();
+					}
+				}
 			}
 		}
 	}
 
-	public synchronized void notifyOnChunk(Runnable runnable, ChunkID chunkID) {
-		runnables.put(chunkID, runnable);
+	public void notifyOnChunk(Runnable runnable, ChunkID chunkID) {
+		synchronized (runnables) {
+			runnables.put(chunkID, runnable);
+		}
 	}
 	
-	public synchronized Chunk getChunk(ChunkID chunkID) {
-		runnables.remove(chunkID);
-		return chunks.remove(chunkID);
+	public Chunk getChunk(ChunkID chunkID) {
+		synchronized (runnables) {
+			synchronized (chunks) {
+				runnables.remove(chunkID);
+				return chunks.remove(chunkID);
+			}
+		}
 	}
 
 }

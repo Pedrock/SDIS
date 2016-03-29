@@ -39,8 +39,4 @@ public class Chunk {
 	public int getReplicationDegree() {
 		return replication;
 	}
-
-	
-	
-	
 }

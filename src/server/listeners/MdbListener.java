@@ -15,24 +15,34 @@ public class MdbListener extends Listener {
 		super(address, port);
 	}
 	
-	public synchronized void handlePutChunk(int sender, String fileId, int chunkNumber, byte[] body) {
+	public void handlePutChunk(int sender, String fileId, int chunkNumber, byte[] body) {
 		ChunkID chunkId = new ChunkID(fileId, chunkNumber);
-		Runnable runnable = runnables.get(chunkId);
-		if (runnable != null)
-		{
-			receivedPutChunks.add(chunkId);
-			synchronized (runnable) {
-				runnable.notifyAll();
+		synchronized (runnables) {
+			Runnable runnable = runnables.get(chunkId);
+			if (runnable != null)
+			{
+				synchronized (receivedPutChunks) {
+					receivedPutChunks.add(chunkId);
+					synchronized (runnable) {
+						runnable.notifyAll();
+					}
+				}
 			}
 		}
 	}
 	
-	public synchronized void notifyOnPutChunk(Runnable runnable, ChunkID chunkID) {
-		runnables.put(chunkID, runnable);
+	public void notifyOnPutChunk(Runnable runnable, ChunkID chunkID) {
+		synchronized (runnables) {
+			runnables.put(chunkID, runnable);
+		}
 	}
 	
-	public synchronized boolean putChunkReceived(ChunkID chunkID) {
-		runnables.remove(chunkID);
-		return receivedPutChunks.remove(chunkID);
+	public boolean putChunkReceived(ChunkID chunkID) {
+		synchronized (runnables) {
+			synchronized (receivedPutChunks) {
+				runnables.remove(chunkID);
+				return receivedPutChunks.remove(chunkID);
+			}
+		}
 	}
 }

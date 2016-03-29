@@ -36,6 +36,7 @@ public class BackupChunk implements Runnable{
 			}
 			sleep *= 2;
 			success = (DBS.getMcListener().getStoredCount(chunk) >= chunk.getReplicationDegree());
+			if (!DBS.getDatabase().hasBackup(chunk.getID())) break;
 		}
 		DBS.getMcListener().stopListenToStored(chunk);
 		if (!success)

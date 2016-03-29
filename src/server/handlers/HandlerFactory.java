@@ -13,7 +13,7 @@ public class HandlerFactory {
 			"^(\\S+)(?: )+([0-9]\\.[0-9])(?: )+(\\S+)(?: ).+?\r\n\r\n",
 			Pattern.DOTALL);
 	
-	public static synchronized Handler getHandler(byte[] message, InetAddress address, int port)
+	public static Handler getHandler(byte[] message, InetAddress address, int port)
 	{
 		Matcher matcher = pattern.matcher(new String(message));
 		if (!matcher.find()) return null;

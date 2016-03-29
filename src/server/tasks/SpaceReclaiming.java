@@ -42,9 +42,10 @@ public class SpaceReclaiming implements Runnable {
 			
 			DBS.getDatabase().resetChunkReplication(chunkID);
 			
-			new BackupChunk(chunk).run();
+			BackupChunk task = new BackupChunk(chunk);
+			task.run();
 			
-			if (info.getOverReplication() > 0)
+			if (task.wasSuccessful())
 			{
 				usedSpace -= deleteChunk(info);
 			}

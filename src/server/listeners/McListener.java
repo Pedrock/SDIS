@@ -32,33 +32,43 @@ public class McListener extends Listener {
 		super(address, port);
 	}
 	
-	public synchronized void notifyOnStored(Runnable runnable, Chunk chunk) 
+	public void notifyOnStored(Runnable runnable, Chunk chunk) 
 	{
-		storedMap.put(chunk.getID(), new StoredMapValue(runnable,chunk.getReplicationDegree()));
+		synchronized (storedMap) {
+			storedMap.put(chunk.getID(), new StoredMapValue(runnable,chunk.getReplicationDegree()));
+		}
 	}
 	
-	public synchronized Integer getStoredCount(Chunk chunk)
+	public Integer getStoredCount(Chunk chunk)
 	{
-		return storedMap.get(chunk.getID()).senders.size();
+		synchronized (storedMap) {
+			StoredMapValue v = storedMap.get(chunk.getID());
+			if (v == null) return 0;
+			return v.senders.size();
+		}
 	}
 	
-	public synchronized void stopListenToStored(Chunk chunk)
+	public void stopListenToStored(Chunk chunk)
 	{
-		storedMap.remove(chunk.getID());
+		synchronized (storedMap) {
+			storedMap.remove(chunk.getID());
+		}
 	}
 
-	public synchronized void handleStored(int sender, String fileId, int chunkNumber) {
+	public void handleStored(int sender, String fileId, int chunkNumber) {
 		ChunkID chunkID = new ChunkID(fileId, chunkNumber);
 		DBS.getDatabase().addChunkPeer(chunkID, sender);
-		if (storedMap.isEmpty()) return;
-		StoredMapValue info = storedMap.get(chunkID);
-		if (info != null)
-		{
-			info.senders.add(sender);
-			if (info.senders.size() >= info.replication)
+		synchronized (storedMap) {
+			if (storedMap.isEmpty()) return;
+			StoredMapValue info = storedMap.get(chunkID);
+			if (info != null)
 			{
-				synchronized (info.runnable) {
-					info.runnable.notifyAll();
+				info.senders.add(sender);
+				if (info.senders.size() >= info.replication)
+				{
+					synchronized (info.runnable) {
+						info.runnable.notifyAll();
+					}
 				}
 			}
 		}

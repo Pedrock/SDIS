@@ -115,11 +115,13 @@ public class MessageBuilder {
 		sendPacket(listener.getAddress(),listener.getPort(),message);
 	}
 	
-	private synchronized void sendPacket(InetAddress address, int port, byte[] message)
+	private void sendPacket(InetAddress address, int port, byte[] message)
 	{
 		DatagramPacket packet = new DatagramPacket(message,message.length,address,port);
 		try {
-			socket.send(packet);
+			synchronized (socket) {
+				socket.send(packet);
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
