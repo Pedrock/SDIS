@@ -18,9 +18,15 @@ public class HandlerFactory {
 		Matcher matcher = pattern.matcher(new String(message));
 		if (!matcher.find()) return null;
 		String header = matcher.group(0);
+		String version = matcher.group(2);
 		int senderId = Integer.parseInt(matcher.group(3));
 		if (senderId == DBS.getId()) return null; // Ignore own requests
 		System.out.println("Handler for "+matcher.group(1));
+		if (!version.equals(DBS.getProtocolVersion()))
+		{
+			System.out.println("Message ignored due to different protocol version.");
+			return null;
+		}
 		switch (matcher.group(1)) // Message type
 		{
 			case "PUTCHUNK":
