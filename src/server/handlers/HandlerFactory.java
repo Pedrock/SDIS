@@ -1,6 +1,7 @@
 package server.handlers;
 
 import java.net.InetAddress;
+import java.nio.charset.StandardCharsets;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -15,7 +16,7 @@ public class HandlerFactory {
 	
 	public static Handler getHandler(byte[] message, InetAddress address, int port)
 	{
-		Matcher matcher = pattern.matcher(new String(message));
+		Matcher matcher = pattern.matcher(new String(message,StandardCharsets.US_ASCII));
 		if (!matcher.find()) return null;
 		String header = matcher.group(0);
 		String version = matcher.group(2);
