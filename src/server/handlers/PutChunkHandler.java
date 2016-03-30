@@ -58,10 +58,22 @@ public class PutChunkHandler extends Handler {
 				return;
 			}
 			
+			int previous_replication = DBS.getDatabase().getChunkCurrentReplication(chunkID);
+			
 			DBS.getDatabase().resetChunkReplication(chunkID);
 			
 			Random random = new Random();
-			int delay = random.nextInt(401); // [0,400]
+			int delay;
+			
+			if (!backed_up && previous_replication >= replication)
+			{
+				delay = 500 + random.nextInt(251); // [500,750]
+			}
+			else
+			{
+				delay = random.nextInt(401); // [0,400]
+			}
+			
 			try {
 				Thread.sleep(delay);
 			} catch (InterruptedException e) { }
