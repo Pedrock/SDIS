@@ -12,6 +12,8 @@ import server.messages.ChunkID;
 
 public class SpaceReclaiming implements Runnable {
 	
+	private static final int SLEEP = 1000;
+	
 	private long backup_space;
 	private Random random = new Random();
 	
@@ -30,28 +32,35 @@ public class SpaceReclaiming implements Runnable {
 			if (usedSpace <= backup_space) break; // Objective achieved
 			ChunkID chunkID = info.getChunkID();
 			
+			DBS.getDatabase().removeReceivedBackup(chunkID, false);
+			DBS.getDatabase().resetChunkReplication(chunkID);
+			
 			DBS.getMessageBuilder().sendRemoved(chunkID.getFileId(),chunkID.getNumber());
 			
 			try {
-				Thread.sleep(400);
+				Thread.sleep(SLEEP);
 			} catch (InterruptedException e1) {
 				e1.printStackTrace();
 			}
 			if (!DBS.isRunning()) throw new PeerError("Server stopped");
-			byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
-			Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
 			
-			DBS.getDatabase().resetChunkReplication(chunkID);
+			int replication = info.getDesiredReplication();
 			
-			BackupChunk task = new BackupChunk(chunk);
-			task.run();
+			if (DBS.getDatabase().getChunkCurrentReplication(chunkID) < replication)
+			{
+				byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
+				Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
+				BackupChunk task = new BackupChunk(chunk);
+				task.run();
+			}
 			
-			if (task.wasSuccessful())
+			if (DBS.getDatabase().getChunkCurrentReplication(chunkID) >= replication)
 			{
 				usedSpace -= deleteChunk(info);
 			}
 			else
 			{
+				DBS.getDatabase().addReceivedBackup(chunkID, info.getSize(), info.getDesiredReplication());
 				DBS.getMessageBuilder().sendStored(chunkID.getFileId(), chunkID.getNumber());
 			}
 			if (!DBS.isRunning()) throw new PeerError("Server stopped");
