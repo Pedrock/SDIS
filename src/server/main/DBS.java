@@ -53,10 +53,10 @@ public class DBS {
 	}
 
 	public void start() {
+		running = true;
 		new Thread(mcListener).start();
 		new Thread(mdbListener).start();
 		new Thread(mdrListener).start();
-		running = true;
 	}
 	
 	public static void stop()
