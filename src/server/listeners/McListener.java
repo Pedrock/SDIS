@@ -6,7 +6,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 
-import server.filesystem.Database;
+import server.filesystem.DatabaseManager;
 import server.main.DBS;
 import server.messages.Chunk;
 import server.messages.ChunkID;
@@ -75,7 +75,7 @@ public class McListener extends Listener {
 	}
 
 	public void handleDelete(int sender, String fileId) {
-		Database db = DBS.getDatabase();
+		DatabaseManager db = DBS.getDatabase();
 		Set<Integer> chunksSet = db.getFileChunks(fileId);
 		if (chunksSet == null) return;
 		Integer[] chunks = chunksSet.toArray(new Integer[chunksSet.size()]);

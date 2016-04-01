@@ -4,7 +4,7 @@ import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import server.filesystem.Database;
+import server.filesystem.DatabaseManager;
 import server.main.DBS;
 import server.messages.Chunk;
 import server.messages.ChunkID;
@@ -30,7 +30,7 @@ public class RemovedHandler extends Handler {
 			Integer chunkNumber = Integer.parseInt(matcher.group(4));
 			ChunkID chunkID = new ChunkID(fileId,chunkNumber);
 			
-			Database db = DBS.getDatabase();
+			DatabaseManager db = DBS.getDatabase();
 			
 			if (db.isMyDeletedFile(fileId))
 			{

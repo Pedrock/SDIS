@@ -19,60 +19,74 @@ import java.util.TreeSet;
 import server.main.DBS;
 import server.messages.ChunkID;
 
-public class Database implements Serializable{
-	private static final long serialVersionUID = 4419138873746909853L;
+public class DatabaseManager{
 	
-	// Chunks received
-	private HashSet<ChunkID> receivedBackups = new HashSet<ChunkID>();
+	static private class DB implements Serializable {
+		private static final long serialVersionUID = -8881389891970410854L;
+
+		// Chunks received
+		private HashSet<ChunkID> receivedBackups = new HashSet<ChunkID>();
+		
+		// fileID -> chunkNumber
+		private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
+		
+		// filename -> fileID
+		private HashMap<String, ArrayList<String>> sentBackups = new HashMap<String, ArrayList<String>>();
+		
+		// Every known chunk information
+		private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
+		
+		// Set of fileIDs owned by this peer
+		private HashSet<String> myFiles = new HashSet<String>();
+		
+		// Set of deleted fileIDs previously owned by this peer
+		private HashSet<String> myDeletedFiles = new HashSet<String>();
+		
+		// Max backup space
+		private Long backup_space = 3200000L;
+	};
 	
-	// Chunks received per fileId
-	private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
-	
-	// FileIds per filename
-	private HashMap<String, ArrayList<String>> sentBackups = new HashMap<String, ArrayList<String>>();
-	
-	// Every known chunk information
-	private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
-	
-	// Set of files owned by this peer
-	private HashSet<String> myFiles = new HashSet<String>();
-	
-	// Set of deleted files previously owned by this peer
-	private HashSet<String> myDeletedFiles = new HashSet<String>();
+	private DB db;
 
 	private HashMap<ChunkID,Long> getchunkTimes = new HashMap<ChunkID,Long>();
 	
-	private Long backup_space = 3200000L;
-	
-	private static Thread thread;
-	
-	public Database()
-	{
-		thread = new Thread() {
-			@Override
-			public void run() {
-				while (DBS.isRunning())
-				{
-					ArrayList<ChunkID> deletes = new ArrayList<ChunkID>();
-					synchronized (getchunkTimes) {
-						long delete_time = Instant.now().getEpochSecond()+60;
-						for (Entry<ChunkID,Long> entry : getchunkTimes.entrySet())
-						{
-							if (entry.getValue() >= delete_time)
-								deletes.add(entry.getKey());
-						}
-						for (ChunkID chunkID : deletes)
-						{
-							getchunkTimes.remove(chunkID);
-						}
+	private Thread thread = new Thread() {
+		@Override
+		public void run() {
+			boolean running = true;
+			while (running)
+			{
+				ArrayList<ChunkID> deletes = new ArrayList<ChunkID>();
+				synchronized (getchunkTimes) {
+					long delete_time = Instant.now().getEpochSecond()+60;
+					for (Entry<ChunkID,Long> entry : getchunkTimes.entrySet())
+					{
+						if (entry.getValue() >= delete_time)
+							deletes.add(entry.getKey());
 					}
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
+					for (ChunkID chunkID : deletes)
+					{
+						getchunkTimes.remove(chunkID);
 					}
 				}
+				try {
+					Thread.sleep(2000);
+				} catch (InterruptedException e) {
+					running = false;
+				}
 			}
-		};
+		}
+	};
+	
+	public DatabaseManager(DB db)
+	{
+		this.db = db;
+		thread.start();
+	}
+	
+	public DatabaseManager()
+	{
+		this.db = new DB();
 		thread.start();
 	}
 	
@@ -83,26 +97,26 @@ public class Database implements Serializable{
 	
 	public long getBackupSpace()
 	{
-		synchronized (backup_space) {
-			return backup_space;
+		synchronized (db.backup_space) {
+			return db.backup_space;
 		}
 	}
 	
 	public void setBackupSpace(long backup_space)
 	{
-		synchronized (this.backup_space) {
-			this.backup_space = backup_space;
+		synchronized (db.backup_space) {
+			db.backup_space = backup_space;
 		}
 	}
 	
 	public void addChunkPeer(ChunkID chunkID, Integer peerID)
 	{
-		synchronized (chunksInfo) {
-			ChunkInfo info = chunksInfo.get(chunkID);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
 			if (info == null)
 			{
 				info = new ChunkInfo();
-				chunksInfo.put(chunkID, info);
+				db.chunksInfo.put(chunkID, info);
 			}
 			info.getPeers().add(peerID);
 		}
@@ -110,8 +124,8 @@ public class Database implements Serializable{
 	}
 	
 	public void removeChunkPeer(ChunkID chunkID, int sender) {
-		synchronized (chunksInfo) {
-			ChunkInfo info = chunksInfo.get(chunkID);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
 			if (info != null)
 				info.getPeers().remove(sender);
 		}
@@ -121,22 +135,22 @@ public class Database implements Serializable{
 	public void addReceivedBackup(ChunkID chunkId, int size, int replication)
 	{
 		String fileId = chunkId.getFileId();
-		synchronized (receivedFilesMap) {
-			HashSet<Integer> fileChunks = receivedFilesMap.get(fileId);
+		synchronized (db.receivedFilesMap) {
+			HashSet<Integer> fileChunks = db.receivedFilesMap.get(fileId);
 			if (fileChunks == null)
 			{
-				receivedFilesMap.put(fileId, new HashSet<Integer>());
-				fileChunks = receivedFilesMap.get(fileId);
+				db.receivedFilesMap.put(fileId, new HashSet<Integer>());
+				fileChunks = db.receivedFilesMap.get(fileId);
 			}
 			fileChunks.add(chunkId.getNumber());
-			synchronized (chunksInfo) {
-				ChunkInfo info = chunksInfo.get(chunkId);
+			synchronized (db.chunksInfo) {
+				ChunkInfo info = db.chunksInfo.get(chunkId);
 				if (info == null)
-					chunksInfo.put(chunkId,new ChunkInfo(size,replication));
+					db.chunksInfo.put(chunkId,new ChunkInfo(size,replication));
 				else if (info.getSize() == null)
 					info.setInfo(size, replication);
-				synchronized (receivedBackups) {
-					receivedBackups.add(chunkId);
+				synchronized (db.receivedBackups) {
+					db.receivedBackups.add(chunkId);
 				}
 			}
 			addChunkPeer(chunkId, DBS.getId());
@@ -146,10 +160,10 @@ public class Database implements Serializable{
 	
 	public void addChunkInfo(ChunkID chunkId, int size, int replication)
 	{
-		synchronized (chunksInfo) {
-			ChunkInfo info = chunksInfo.get(chunkId);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkId);
 			if (info == null)
-				chunksInfo.put(chunkId,new ChunkInfo(size,replication));
+				db.chunksInfo.put(chunkId,new ChunkInfo(size,replication));
 			else if (info.getSize() == null)
 				info.setInfo(size, replication);
 		}
@@ -158,15 +172,15 @@ public class Database implements Serializable{
 	
 	public boolean hasBackup(ChunkID chunkID)
 	{
-		synchronized (receivedBackups) {
-			return receivedBackups.contains(chunkID);
+		synchronized (db.receivedBackups) {
+			return db.receivedBackups.contains(chunkID);
 		}
 	}
 	
 	public int getChunkCurrentReplication(ChunkID chunkID)
 	{
-		synchronized (chunksInfo) {
-			ChunkInfo info = chunksInfo.get(chunkID);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
 			if (info == null) return 0;
 			return info.getPeers().size();
 		}
@@ -174,8 +188,8 @@ public class Database implements Serializable{
 	
 	public Integer getChunkDesiredReplication(ChunkID chunkID)
 	{
-		synchronized (chunksInfo) {
-			ChunkInfo info = chunksInfo.get(chunkID);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
 			if (info == null) return null;
 			return info.getDesiredReplication();
 		}
@@ -183,12 +197,12 @@ public class Database implements Serializable{
 	
 	public long getTotalUsedSpace()
 	{
-		synchronized (chunksInfo) {
-			synchronized (receivedBackups) {
+		synchronized (db.chunksInfo) {
+			synchronized (db.receivedBackups) {
 				long sum = 0;
-				for (ChunkID chunkID : receivedBackups)
+				for (ChunkID chunkID : db.receivedBackups)
 				{
-					sum += chunksInfo.get(chunkID).getSize();
+					sum += db.chunksInfo.get(chunkID).getSize();
 				}
 				return sum;
 			}
@@ -198,19 +212,19 @@ public class Database implements Serializable{
 	@SuppressWarnings("unchecked")
 	private HashMap<ChunkID, ChunkInfo> cloneChunksInfo()
 	{
-		synchronized (chunksInfo) {
-			return (HashMap<ChunkID, ChunkInfo>)chunksInfo.clone();
+		synchronized (db.chunksInfo) {
+			return (HashMap<ChunkID, ChunkInfo>)db.chunksInfo.clone();
 		}
 	}
 	
 	public void resetChunkReplication(ChunkID chunkID)
 	{
-		synchronized (chunksInfo) {
-			ChunkInfo info = chunksInfo.get(chunkID);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
 			if (info != null) info.resetReplication();
 		}
-		synchronized (receivedBackups) {
-			if (receivedBackups.contains(chunkID))
+		synchronized (db.receivedBackups) {
+			if (db.receivedBackups.contains(chunkID))
 			{
 				addChunkPeer(chunkID, DBS.getId());
 			}
@@ -224,8 +238,8 @@ public class Database implements Serializable{
 		for (Entry<ChunkID, ChunkInfo> entry : map.entrySet())
 		{
 			boolean backupReceived;
-			synchronized (receivedBackups) {
-				backupReceived = receivedBackups.contains(entry.getKey());
+			synchronized (db.receivedBackups) {
+				backupReceived = db.receivedBackups.contains(entry.getKey());
 			}
 			if (backupReceived)
 				result.add(new ChunkInfo(entry.getKey(), entry.getValue()));
@@ -236,52 +250,52 @@ public class Database implements Serializable{
 	
 	public void addSentBackup(String filename, String fileId)
 	{
-		synchronized (sentBackups) {
-			ArrayList<String> list = sentBackups.get(filename);
+		synchronized (db.sentBackups) {
+			ArrayList<String> list = db.sentBackups.get(filename);
 			if (list == null) {
-				sentBackups.put(filename, new ArrayList<String>());
-				list = sentBackups.get(filename);
+				db.sentBackups.put(filename, new ArrayList<String>());
+				list = db.sentBackups.get(filename);
 			}
 			list.add(fileId);
 		}
-		synchronized (myFiles) {
-			myFiles.add(fileId);
+		synchronized (db.myFiles) {
+			db.myFiles.add(fileId);
 		}
 		saveToFile();
 	}
 	
 	public boolean isMyFile(String fileId)
 	{
-		synchronized (myFiles) {
-			return myFiles.contains(fileId);
+		synchronized (db.myFiles) {
+			return db.myFiles.contains(fileId);
 		}
 	}
 	
 	public boolean isMyDeletedFile(String fileId) 
 	{
-		synchronized (fileId) {
-			return myDeletedFiles.contains(fileId);
+		synchronized (db.myDeletedFiles) {
+			return db.myDeletedFiles.contains(fileId);
 		}
 	}
 	
 	public void deleteMyFile(String filename, String fileId)
 	{
-		synchronized (myDeletedFiles) {
-			myDeletedFiles.add(fileId);
+		synchronized (db.myDeletedFiles) {
+			db.myDeletedFiles.add(fileId);
 		}
-		synchronized (sentBackups) {
-			sentBackups.remove(filename);
+		synchronized (db.sentBackups) {
+			db.sentBackups.remove(filename);
 		}
-		synchronized (myFiles) {
-			myFiles.remove(fileId);
+		synchronized (db.myFiles) {
+			db.myFiles.remove(fileId);
 		}
 		saveToFile();
 	}
 	
 	public String getLastSentFileId(String filename)
 	{
-		synchronized (sentBackups) {
-			ArrayList<String> list = sentBackups.get(filename);
+		synchronized (db.sentBackups) {
+			ArrayList<String> list = db.sentBackups.get(filename);
 			if (list == null || list.isEmpty()) return null;
 			return list.get(list.size()-1);
 		}
@@ -289,20 +303,20 @@ public class Database implements Serializable{
 	
 	public void removeReceivedBackup(ChunkID chunkId, boolean isDelete)
 	{
-		synchronized (receivedFilesMap) {
+		synchronized (db.receivedFilesMap) {
 			String fileId = chunkId.getFileId();
-			HashSet<Integer> chunks = receivedFilesMap.get(fileId);
+			HashSet<Integer> chunks = db.receivedFilesMap.get(fileId);
 			if (chunks == null) return;
 			chunks.remove(chunkId.getNumber());
 			if (chunks.isEmpty())
-				receivedFilesMap.remove(fileId);
+				db.receivedFilesMap.remove(fileId);
 			if (isDelete)
 			{
-				synchronized (chunksInfo) {
-					chunksInfo.remove(chunkId);
+				synchronized (db.chunksInfo) {
+					db.chunksInfo.remove(chunkId);
 				}
 			}
-			receivedBackups.remove(chunkId);
+			db.receivedBackups.remove(chunkId);
 		}
 		removeChunkPeer(chunkId, DBS.getId());
 		saveToFile();
@@ -311,8 +325,8 @@ public class Database implements Serializable{
 	public Set<Integer> getFileChunks(String fileId)
 	{
 		Set<Integer> result;
-		synchronized (receivedFilesMap) {
-			result = receivedFilesMap.get(fileId);
+		synchronized (db.receivedFilesMap) {
+			result = db.receivedFilesMap.get(fileId);
 		}
 		saveToFile();
 		return result;
@@ -333,7 +347,7 @@ public class Database implements Serializable{
 		try (FileOutputStream fileOut = new FileOutputStream("database.db");)
 		{
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
-			out.writeObject(this);
+			out.writeObject(this.db);
 	        out.close();
 		}
 		catch (IOException ex)
@@ -343,13 +357,13 @@ public class Database implements Serializable{
 		}
 	}
 	
-	public static Database fromFile()
+	public static DatabaseManager fromFile()
 	{
-		Database database = null;
+		DB db = null;
 		try (FileInputStream fileIn = new FileInputStream("database.db");
 				ObjectInputStream in = new ObjectInputStream(fileIn);)
 		{
-			database = (Database)in.readObject();
+			db = (DB)in.readObject();
 		}catch(IOException i)
 		{
 			if (i instanceof FileNotFoundException)
@@ -364,6 +378,7 @@ public class Database implements Serializable{
 			c.printStackTrace();
 			return null;
 		}
-		return database;
+		DatabaseManager databaseManager = new DatabaseManager(db);
+		return databaseManager;
 	}
 }

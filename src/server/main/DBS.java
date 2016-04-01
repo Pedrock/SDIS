@@ -1,7 +1,7 @@
 package server.main;
 import java.io.IOException;
 
-import server.filesystem.Database;
+import server.filesystem.DatabaseManager;
 import server.filesystem.FileManager;
 import server.listeners.McListener;
 import server.listeners.MdbListener;
@@ -30,7 +30,7 @@ public class DBS {
 	
 	private static MessageBuilder messageBuilder;
 	
-	private static Database database;
+	private static DatabaseManager database;
 	
 	private static volatile boolean running = false;
 	
@@ -42,9 +42,9 @@ public class DBS {
 		backupsFM = new FileManager("Backups");
 		restoredFM = new FileManager("Restored");
 		messageBuilder = new MessageBuilder();
-		database = Database.fromFile();
+		database = DatabaseManager.fromFile();
 		if (database == null)
-			database = new Database();
+			database = new DatabaseManager();
 	}
 	
 	public DBS(int id, String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
@@ -130,7 +130,7 @@ public class DBS {
 		return messageBuilder;
 	}
 	
-	public static Database getDatabase()
+	public static DatabaseManager getDatabase()
 	{
 		return database;
 	}
