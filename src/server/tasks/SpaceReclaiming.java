@@ -1,7 +1,6 @@
 package server.tasks;
 
 import java.io.File;
-import java.util.Random;
 import java.util.SortedSet;
 
 import server.filesystem.ChunkInfo;
@@ -15,7 +14,6 @@ public class SpaceReclaiming implements Runnable {
 	private static final int SLEEP = 1000;
 	
 	private long backup_space;
-	private Random random = new Random();
 	
 	public SpaceReclaiming(long backup_space) {
 		this.backup_space = backup_space;
@@ -26,7 +24,6 @@ public class SpaceReclaiming implements Runnable {
 		DBS.getDatabase().setBackupSpace(backup_space);
 		SortedSet<ChunkInfo> infos = DBS.getDatabase().getBackupChunksInfo();
 		long usedSpace = DBS.getDatabase().getTotalUsedSpace();
-		System.out.println(usedSpace);
 		for (ChunkInfo info : infos)
 		{
 			if (usedSpace <= backup_space) break; // Objective achieved
@@ -50,7 +47,7 @@ public class SpaceReclaiming implements Runnable {
 			{
 				byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
 				Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
-				BackupChunk task = new BackupChunk(chunk);
+				BackupChunk task = new BackupChunk(chunk,true);
 				task.run();
 			}
 			
@@ -63,11 +60,6 @@ public class SpaceReclaiming implements Runnable {
 				DBS.getDatabase().addReceivedBackup(chunkID, info.getSize(), info.getDesiredReplication());
 				DBS.getMessageBuilder().sendStored(chunkID.getFileId(), chunkID.getNumber());
 			}
-			if (!DBS.isRunning()) throw new PeerError("Server stopped");
-			int delay = random.nextInt(51); // [0,50]
-			try {
-				Thread.sleep(delay);
-			} catch (InterruptedException e) { }
 			if (!DBS.isRunning()) throw new PeerError("Server stopped");
 		}
 		if (usedSpace <= backup_space)

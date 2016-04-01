@@ -16,6 +16,7 @@ public class GetChunkHandler extends Handler {
 			Pattern.DOTALL);
 	
 	private InetAddress address;
+	private Random random = new Random();
 	
 	public GetChunkHandler(String header, InetAddress address) {
 		super(header);
@@ -38,7 +39,6 @@ public class GetChunkHandler extends Handler {
 				byte[] content = DBS.getBackupsFileManager().getFileContents(file.getName());
 				if (content != null)
 				{
-					Random random = new Random();
 					int delay = random.nextInt(401); // [0,400]
 					
 					DBS.getMdrListener().notifyOnChunk(this, chunkID);
@@ -50,17 +50,29 @@ public class GetChunkHandler extends Handler {
 					}
 					
 					int chance = DBS.getDatabase().getChunkCurrentReplication(chunkID);
-					if (chance == 0) chance = 1;
+					boolean multicast = DBS.getDatabase().getchunkReceived(chunkID);
+					
 					
 					if (DBS.getMdrListener().getChunk(chunkID) == null)
 					{
-						if (random.nextInt(chance) == 0)
+						if (multicast)
 						{
-							DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content,address);
-							System.out.println("CHUNK sent");
+							DBS.getMessageBuilder().sendChunk(fileId, chunkNumber, content);
+							System.out.println("CHUNK sent via multicast");
 						}
 						else
-							System.out.println("CHUNK not sent because of the probability");
+						{
+							if (chance == 0) chance = 1;
+							if (random.nextInt(chance) == 0)
+							{
+								DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content,address);
+								System.out.println("CHUNK sent via unicast");
+							}
+							else
+							{
+								System.out.println("CHUNK not sent because of the probability");
+							}
+						}
 					}
 					else
 					{

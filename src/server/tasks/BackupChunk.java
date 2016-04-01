@@ -11,9 +11,16 @@ public class BackupChunk implements Runnable{
 	private Chunk chunk;
 	
 	private boolean success = false;
+	private boolean nonInitiator = false;
 	
-	public BackupChunk(Chunk chunk) {
+	public BackupChunk(Chunk chunk)
+	{
 		this.chunk = chunk;
+	}
+	
+	public BackupChunk(Chunk chunk, boolean nonInitiator) {
+		this.chunk = chunk;
+		this.nonInitiator = nonInitiator;
 	}
 	
 	boolean wasSuccessful()
@@ -37,10 +44,10 @@ public class BackupChunk implements Runnable{
 			sleep *= 2;
 			success = (DBS.getMcListener().getStoredCount(chunk) >= chunk.getReplicationDegree());
 		
-			if (!DBS.getDatabase().hasBackup(chunk.getID()))
+			if (nonInitiator && !DBS.getDatabase().hasBackup(chunk.getID()))
 			{
 				System.out.println("No backup");
-				 break;
+				break;
 			}
 			if (!DBS.isRunning()) break;
 		}

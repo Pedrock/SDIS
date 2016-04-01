@@ -76,6 +76,8 @@ public class DBS {
 		try {
 			mdrListenerThread.join();
 		} catch (Exception e) { }
+		
+		DBS.getDatabase().interruptThread();
 	}
 	
 	public static boolean isRunning()

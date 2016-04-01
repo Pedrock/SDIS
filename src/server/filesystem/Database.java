@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -38,8 +39,47 @@ public class Database implements Serializable{
 	
 	// Set of deleted files previously owned by this peer
 	private HashSet<String> myDeletedFiles = new HashSet<String>();
+
+	private HashMap<ChunkID,Long> getchunkTimes = new HashMap<ChunkID,Long>();
 	
 	private Long backup_space = 3200000L;
+	
+	private static Thread thread;
+	
+	public Database()
+	{
+		thread = new Thread() {
+			@Override
+			public void run() {
+				while (DBS.isRunning())
+				{
+					ArrayList<ChunkID> deletes = new ArrayList<ChunkID>();
+					synchronized (getchunkTimes) {
+						long delete_time = Instant.now().getEpochSecond()+60;
+						for (Entry<ChunkID,Long> entry : getchunkTimes.entrySet())
+						{
+							if (entry.getValue() >= delete_time)
+								deletes.add(entry.getKey());
+						}
+						for (ChunkID chunkID : deletes)
+						{
+							getchunkTimes.remove(chunkID);
+						}
+					}
+					try {
+						Thread.sleep(1000);
+					} catch (InterruptedException e) {
+					}
+				}
+			}
+		};
+		thread.start();
+	}
+	
+	public void interruptThread()
+	{
+		thread.interrupt();
+	}
 	
 	public long getBackupSpace()
 	{
@@ -275,6 +315,16 @@ public class Database implements Serializable{
 			result = receivedFilesMap.get(fileId);
 		}
 		saveToFile();
+		return result;
+	}
+	
+	public boolean getchunkReceived(ChunkID chunkID)
+	{
+		boolean result;
+		synchronized (getchunkTimes) {
+			result = getchunkTimes.containsKey(chunkID);
+			getchunkTimes.put(chunkID, Instant.now().getEpochSecond());
+		}
 		return result;
 	}
 	
