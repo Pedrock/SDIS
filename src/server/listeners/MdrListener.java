@@ -39,11 +39,18 @@ public class MdrListener extends Listener {
 	}
 	
 	public Chunk getChunk(ChunkID chunkID) {
+		synchronized (chunks) {
+			return chunks.get(chunkID);
+		}
+	}
+	
+	public void stopListenToChunk(ChunkID chunkID)
+	{
 		synchronized (runnables) {
-			synchronized (chunks) {
-				runnables.remove(chunkID);
-				return chunks.remove(chunkID);
-			}
+			runnables.remove(chunkID);
+		}
+		synchronized (chunks) {
+			chunks.remove(chunkID);
 		}
 	}
 

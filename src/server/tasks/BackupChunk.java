@@ -31,15 +31,21 @@ public class BackupChunk implements Runnable{
 			DBS.getMessageBuilder().sendPutChunk(chunk);
 			synchronized(this) {
 				try {
-					wait(sleep);
+					this.wait(sleep);
 				} catch (InterruptedException e) {}
 			}
 			sleep *= 2;
 			success = (DBS.getMcListener().getStoredCount(chunk) >= chunk.getReplicationDegree());
-			if (!DBS.getDatabase().hasBackup(chunk.getID())) break;
-			if (!DBS.isRunning()) return;
+		
+			if (!DBS.getDatabase().hasBackup(chunk.getID()))
+			{
+				System.out.println("No backup");
+				 break;
+			}
+			if (!DBS.isRunning()) break;
 		}
 		DBS.getMcListener().stopListenToStored(chunk);
+		if (!DBS.isRunning()) return;
 		if (!success)
 		{
 			System.out.println("Replication degree not achieved");

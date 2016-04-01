@@ -61,22 +61,26 @@ public class Restore implements Runnable{
 		FileOutputStream stream = null;
 		try 
 		{
-			int chunkN = 1;
+			int chunkN = 0;
 			int chunk_size = 0;
 			do
 			{
 				int sleep = INITIAL_SLEEP;
 				int n_try = 0;
 				boolean chunk_received = false;
+				
+				ChunkID chunkID = new ChunkID(fileId, chunkN);
+				
+				DBS.getMdrListener().notifyOnChunk(this, chunkID);
+				
+				boolean failed = true;
+				
 				for (; n_try < MAX_TRIES && !chunk_received; n_try++)
 				{
-					ChunkID chunkID = new ChunkID(fileId, chunkN);
-					DBS.getMdrListener().notifyOnChunk(this, chunkID);
-					
 					DBS.getMessageBuilder().sendGetChunk(fileId, chunkN);
 					synchronized(this) {
 						try {
-							wait(sleep);
+							this.wait(sleep);
 						} catch (InterruptedException e) {}
 					}
 					sleep *= 2;
@@ -89,10 +93,14 @@ public class Restore implements Runnable{
 						chunk_size = chunk.getChunkData().length;
 						if (stream == null) stream = new FileOutputStream(file);
 						stream.write(chunk.getChunkData());
+						failed = false;
 					}
 					if (!DBS.isRunning()) throw new PeerError("Server stopped");
 				}
-				if (n_try == 5)
+				
+				DBS.getMdrListener().stopListenToChunk(chunkID);
+				
+				if (failed)
 				{
 					throw new TimeoutException();
 				}
@@ -104,6 +112,7 @@ public class Restore implements Runnable{
 		catch (IOException ex) {
 			ex.printStackTrace();
 		} catch (TimeoutException e) {
+			System.out.println("Restore failed");
 			if (stream != null)
 				throw new PeerError("Restore Failed. File was partially restored");
 			throw new PeerError("Restore failed completely.");

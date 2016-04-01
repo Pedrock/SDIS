@@ -14,7 +14,7 @@ public class HandlerFactory {
 			"^(\\S+)(?: )+([0-9]\\.[0-9])(?: )+(\\S+)(?: ).+?\r\n\r\n",
 			Pattern.DOTALL);
 	
-	public static Handler getHandler(byte[] message, InetAddress address, int port)
+	public static Handler getHandler(byte[] message, InetAddress address)
 	{
 		Matcher matcher = pattern.matcher(new String(message,StandardCharsets.US_ASCII));
 		if (!matcher.find()) return null;
@@ -35,7 +35,7 @@ public class HandlerFactory {
 			case "STORED":
 				return new StoredHandler(header);
 			case "GETCHUNK":
-				return new GetChunkHandler(header,address,port);
+				return new GetChunkHandler(header,address);
 			case "CHUNK":
 				return new ChunkHandler(header,message);
 			case "DELETE":

@@ -33,9 +33,9 @@ public class Backup implements Runnable{
 		{
 			String fileId = localFM.generateFileHash(filename);
 			boolean success = true;
-			for (int n = 1; n <= chunks; n++)
+			for (int n = 0; n < chunks; n++)
 			{
-				long remaining_size = file_size - (n-1)*DBS.CHUNK_SIZE;
+				long remaining_size = file_size - n*DBS.CHUNK_SIZE;
 				int chunk_size = (int)Math.min(DBS.CHUNK_SIZE, remaining_size);
 				byte[] chunk = new byte[chunk_size];
 				s.read(chunk);

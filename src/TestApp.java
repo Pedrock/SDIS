@@ -27,6 +27,7 @@ class TestApp {
 	
 	public static void main(String[] args) {
 		if (args.length < 3 || args.length > 4
+				|| !sub_protocols.containsKey(args[1].toLowerCase())
 				|| !sub_protocols.get(args[1].toLowerCase()).equals(args.length-2))
 		{
 			printUsage();

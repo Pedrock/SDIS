@@ -44,7 +44,7 @@ public abstract class Listener implements Runnable{
             try {
 				socket.receive(msgPacket);
 				byte[] msg = Arrays.copyOfRange(msgPacket.getData(),msgPacket.getOffset(),msgPacket.getOffset()+msgPacket.getLength());
-				Handler handler = HandlerFactory.getHandler(msg,msgPacket.getAddress(),msgPacket.getPort());
+				Handler handler = HandlerFactory.getHandler(msg,msgPacket.getAddress());
 				if (handler != null)
 				{
 					new Thread(handler).start();

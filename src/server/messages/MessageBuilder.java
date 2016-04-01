@@ -42,7 +42,7 @@ public class MessageBuilder {
 		sendToMc(message);
 	}
 	
-	public void sendChunk(String fileId, int chunkNumber, byte[] body, InetAddress address, int port)
+	public void sendChunk(String fileId, int chunkNumber, byte[] body, InetAddress address)
 	{
 		byte[] header = buildHeader(
 				"CHUNK",
@@ -53,7 +53,7 @@ public class MessageBuilder {
 		System.arraycopy(header,0,message,0            ,header.length);
 		System.arraycopy(body,  0,message,header.length,body.length);
 		
-		sendToMdr(message);
+		sendPacket(address,DBS.getMdrListener().getPort(),message);
 	}
 	
 	public void sendGetChunk(String fileId, int chunkNumber) {
@@ -105,10 +105,10 @@ public class MessageBuilder {
 		sendPacket(DBS.getMdbListener(), message);
 	}
 	
-	private void sendToMdr(byte[] message)
-	{
-		sendPacket(DBS.getMdrListener(), message);
-	}
+//	private void sendToMdr(byte[] message)
+//	{
+//		sendPacket(DBS.getMdrListener(), message);
+//	}
 	
 	private void sendPacket(Listener listener, byte[] message)
 	{

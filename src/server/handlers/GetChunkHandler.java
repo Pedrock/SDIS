@@ -16,12 +16,10 @@ public class GetChunkHandler extends Handler {
 			Pattern.DOTALL);
 	
 	private InetAddress address;
-	private int port;
 	
-	public GetChunkHandler(String header, InetAddress address, int port) {
+	public GetChunkHandler(String header, InetAddress address) {
 		super(header);
 		this.address = address;
-		this.port = port;
 	}
 
 	@Override
@@ -58,7 +56,7 @@ public class GetChunkHandler extends Handler {
 					{
 						if (random.nextInt(chance) == 0)
 						{
-							DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content,address,port);
+							DBS.getMessageBuilder().sendChunk(fileId,chunkNumber,content,address);
 							System.out.println("CHUNK sent");
 						}
 						else
