@@ -1,12 +1,9 @@
 package server.listeners;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Set;
 
-import server.filesystem.DatabaseManager;
 import server.main.DBS;
 import server.messages.Chunk;
 import server.messages.ChunkID;
@@ -14,11 +11,11 @@ import server.messages.ChunkID;
 public class McListener extends Listener {
 	
 	private class StoredMapValue {
-		Runnable runnable;
+		Object runnable;
 		HashSet<Integer> senders;
 		int replication;
 		
-		StoredMapValue(Runnable runnable, int replication) {
+		StoredMapValue(Object runnable, int replication) {
 			super();
 			this.runnable = runnable;
 			this.senders = new HashSet<Integer>();
@@ -32,7 +29,7 @@ public class McListener extends Listener {
 		super(address, port);
 	}
 	
-	public void notifyOnStored(Runnable runnable, Chunk chunk) 
+	public void notifyOnStored(Object runnable, Chunk chunk) 
 	{
 		synchronized (storedMap) {
 			storedMap.put(chunk.getID(), new StoredMapValue(runnable,chunk.getReplicationDegree()));
@@ -70,23 +67,6 @@ public class McListener extends Listener {
 						info.runnable.notifyAll();
 					}
 				}
-			}
-		}
-	}
-
-	public void handleDelete(int sender, String fileId) {
-		DatabaseManager db = DBS.getDatabase();
-		Set<Integer> chunksSet = db.getFileChunks(fileId);
-		if (chunksSet == null) return;
-		Integer[] chunks = chunksSet.toArray(new Integer[chunksSet.size()]);
-		if (chunks != null)
-		{
-			for (Integer chunk : chunks) 
-			{
-				ChunkID chunkId = new ChunkID(fileId, chunk);
-				File file = DBS.getBackupsFileManager().getFile(chunkId.toString());
-				file.delete();
-				db.removeReceivedBackup(chunkId, true);
 			}
 		}
 	}

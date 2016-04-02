@@ -27,7 +27,7 @@ public class DatabaseManager{
 		// Chunks received
 		private HashSet<ChunkID> receivedBackups = new HashSet<ChunkID>();
 		
-		// fileID -> chunkNumber
+		// fileID -> chunkNumbers
 		private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
 		
 		// filename -> fileID
@@ -36,8 +36,8 @@ public class DatabaseManager{
 		// Every known chunk information
 		private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
 		
-		// Set of fileIDs owned by this peer
-		private HashSet<String> myFiles = new HashSet<String>();
+		// fileIDs owned by this peer -> number of chunks
+		private HashMap<String,Integer> myFiles = new HashMap<String,Integer>();
 		
 		// Set of deleted fileIDs previously owned by this peer
 		private HashSet<String> myDeletedFiles = new HashSet<String>();
@@ -248,7 +248,7 @@ public class DatabaseManager{
 	}
 	
 	
-	public void addSentBackup(String filename, String fileId)
+	public void addSentBackup(String filename, String fileId, int n_chunks)
 	{
 		synchronized (db.sentBackups) {
 			ArrayList<String> list = db.sentBackups.get(filename);
@@ -259,15 +259,20 @@ public class DatabaseManager{
 			list.add(fileId);
 		}
 		synchronized (db.myFiles) {
-			db.myFiles.add(fileId);
+			db.myFiles.put(fileId,n_chunks);
 		}
 		saveToFile();
+	}
+	
+	public Integer getNumberChunks(String fileId)
+	{
+		return db.myFiles.get(fileId);
 	}
 	
 	public boolean isMyFile(String fileId)
 	{
 		synchronized (db.myFiles) {
-			return db.myFiles.contains(fileId);
+			return db.myFiles.containsKey(fileId);
 		}
 	}
 	
@@ -280,6 +285,20 @@ public class DatabaseManager{
 	
 	public void deleteMyFile(String filename, String fileId)
 	{
+		Set<Integer> chunksSet = this.getFileChunks(fileId);
+		if (chunksSet != null) {
+			Integer[] chunks = chunksSet.toArray(new Integer[chunksSet.size()]);
+			if (chunks != null)
+			{
+				for (Integer chunk : chunks) 
+				{
+					ChunkID chunkId = new ChunkID(fileId, chunk);
+					synchronized (db.chunksInfo) {
+						db.chunksInfo.remove(chunkId);
+					}
+				}
+			}
+		}
 		synchronized (db.myDeletedFiles) {
 			db.myDeletedFiles.add(fileId);
 		}

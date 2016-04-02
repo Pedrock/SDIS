@@ -4,6 +4,12 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.rmi.activation.UnknownObjectException;
+import java.util.ArrayList;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeoutException;
 
 import server.filesystem.FileManager;
@@ -14,8 +20,59 @@ import server.messages.ChunkID;
 
 public class Restore implements Runnable{
 	
+	private static class ChunkRestore implements Callable<Chunk>
+	{
+		private String fileId;
+		private int chunkN;
+		
+		ChunkRestore(String fileId, int chunkN) {
+			this.fileId = fileId;
+			this.chunkN = chunkN;
+		}
+		
+		@Override
+		public Chunk call() throws Exception {
+			int sleep = INITIAL_SLEEP;
+			int n_try = 0;
+			boolean chunk_received = false;
+			
+			ChunkID chunkID = new ChunkID(fileId, chunkN);
+			
+			try
+			{
+				DBS.getMdrListener().notifyOnChunk(this, chunkID);
+				
+				for (; n_try < MAX_TRIES && !chunk_received; n_try++)
+				{
+					DBS.getMessageBuilder().sendGetChunk(fileId, chunkN);
+					synchronized(this) {
+						try {
+							this.wait(sleep);
+						} catch (InterruptedException e) {}
+					}
+					sleep *= 2;
+					Chunk chunk = DBS.getMdrListener().getChunk(chunkID);
+					if (chunk != null)
+					{
+						System.out.println("Valid chunk received");
+						return chunk;
+					}
+					if (!DBS.isRunning()) throw new PeerError("Server stopped");
+				}
+				if (!DBS.isRunning()) throw new PeerError("Server stopped");
+				return null;
+			}
+			finally
+			{
+				DBS.getMdrListener().stopListenToChunk(chunkID);
+			}
+		}
+		
+	}
+	
 	private static final int INITIAL_SLEEP = 1000;
 	private static final int MAX_TRIES = 5;
+	private static final int MAX_THREADS = 100;
 	
 	private String filename;
 	private String fileId;
@@ -61,62 +118,47 @@ public class Restore implements Runnable{
 		FileOutputStream stream = null;
 		try 
 		{
-			int chunkN = 0;
-			int chunk_size = 0;
-			do
+			Integer n_chunks = DBS.getDatabase().getNumberChunks(fileId);
+			if (n_chunks == null) throw new PeerError("Unknown number of chunks");
+			
+			ExecutorService pool = Executors.newFixedThreadPool(MAX_THREADS);
+			
+			ArrayList<Future<Chunk>> list = new ArrayList<Future<Chunk>>();
+			
+			for (int chunkN = 0; chunkN < n_chunks; chunkN++)
 			{
-				int sleep = INITIAL_SLEEP;
-				int n_try = 0;
-				boolean chunk_received = false;
-				
-				ChunkID chunkID = new ChunkID(fileId, chunkN);
-				
-				DBS.getMdrListener().notifyOnChunk(this, chunkID);
-				
-				boolean failed = true;
-				
-				for (; n_try < MAX_TRIES && !chunk_received; n_try++)
+				ChunkRestore callable = new ChunkRestore(fileId, chunkN);
+				Future<Chunk> future = pool.submit(callable);
+				list.add(future);
+			}
+			for (Future<Chunk> future : list)
+			{
+				try
 				{
-					DBS.getMessageBuilder().sendGetChunk(fileId, chunkN);
-					synchronized(this) {
-						try {
-							this.wait(sleep);
-						} catch (InterruptedException e) {}
-					}
-					sleep *= 2;
-					Chunk chunk = DBS.getMdrListener().getChunk(chunkID);
-					if (chunk != null)
+					Chunk chunk = future.get();
+					if (chunk == null)
 					{
-						chunk_received = true;
-						chunkN++;
-						System.out.println("Valid chunk received");
-						chunk_size = chunk.getChunkData().length;
-						if (stream == null) stream = new FileOutputStream(file);
-						stream.write(chunk.getChunkData());
-						failed = false;
+						if (stream != null)
+							throw new PeerError("Restore Failed. File was partially restored");
+						throw new PeerError("Restore failed completely.");
 					}
-					if (!DBS.isRunning()) throw new PeerError("Server stopped");
+					if (stream == null) stream = new FileOutputStream(file);
+					stream.write(chunk.getChunkData());
 				}
-				
-				DBS.getMdrListener().stopListenToChunk(chunkID);
-				
-				if (failed)
+				catch (ExecutionException ex)
 				{
-					throw new TimeoutException();
+					throw (Exception)ex.getCause();
 				}
+				try {
+					Thread.sleep(19);
+				} catch (Exception ex) {}
 				if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			}
-			while (chunk_size == DBS.CHUNK_SIZE);
 			System.out.println("File restored successfully");	
 		} 
 		catch (IOException ex) {
 			ex.printStackTrace();
-		} catch (TimeoutException e) {
-			System.out.println("Restore failed");
-			if (stream != null)
-				throw new PeerError("Restore Failed. File was partially restored");
-			throw new PeerError("Restore failed completely.");
-		}
+		} 
 		finally {
 			try {
 				if (stream != null) stream.close();

@@ -11,6 +11,7 @@ public class Delete implements Runnable {
 	private static final int INITIAL_SLEEP = 500;
 	private static final int MAX_TRIES = 5;
 	
+	private String filename;
 	private String fileId;
 	
 	public Delete(String filename) throws UnknownObjectException {
@@ -19,15 +20,19 @@ public class Delete implements Runnable {
 		{
 			throw new UnknownObjectException(filename);
 		}
+		this.filename = filename;
 		this.fileId = id;
 	}
 	
 	public Delete(ChunkID chunk) {
+		this.filename = null;
 		this.fileId = chunk.getFileId();
 	}
 	
 	public void runWithExceptions() throws Exception
 	{
+		if (filename != null)
+			DBS.getDatabase().deleteMyFile(filename, fileId);
 		int sleep = INITIAL_SLEEP;
 		for (int i = 0; i < MAX_TRIES; i++)
 		{
