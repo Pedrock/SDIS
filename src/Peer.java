@@ -23,6 +23,10 @@ class Peer implements PeerInterface{
 		Integer mdb_port = Integer.parseInt(args[4]);
 		Integer mdr_port = Integer.parseInt(args[6]);
 		dbs = new DBS(id,args[1],mc_port,args[3],mdb_port,args[5],mdr_port);
+		if (args.length == 8)
+		{
+			DBS.getDatabase().setBackupSpace(Long.parseLong(args[7]));
+		}
 	}
 	
 	private void start()
@@ -35,7 +39,7 @@ class Peer implements PeerInterface{
 		
 		String remote_object_name = null;
 		
-		if (args.length == 7)
+		if (args.length == 7 || args.length == 8)
 		{
 			try {
 				Peer server = new Peer(args);
@@ -50,7 +54,7 @@ class Peer implements PeerInterface{
 		}
 		else
 		{
-			 System.out.println("Invalid args");
+			 System.out.println("Usage: java Peer <id> <MC_address> <MC_port> <MDB_address> <MDB_port> <MDR_address> <MDR_port> [allocated_backup_space]");
 			 return;
 		}
 		
