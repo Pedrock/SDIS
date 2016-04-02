@@ -47,6 +47,7 @@ public class SpaceReclaiming implements Runnable {
 			{
 				byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
 				Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
+				DBS.getDatabase().addReceivedBackup(chunkID, info.getSize(), info.getDesiredReplication());
 				BackupChunk task = new BackupChunk(chunk,true);
 				task.run();
 			}
@@ -57,7 +58,6 @@ public class SpaceReclaiming implements Runnable {
 			}
 			else
 			{
-				DBS.getDatabase().addReceivedBackup(chunkID, info.getSize(), info.getDesiredReplication());
 				DBS.getMessageBuilder().sendStored(chunkID.getFileId(), chunkID.getNumber());
 			}
 			if (!DBS.isRunning()) throw new PeerError("Server stopped");

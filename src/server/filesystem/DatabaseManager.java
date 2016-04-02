@@ -372,7 +372,7 @@ public class DatabaseManager{
 			out.writeObject(this.db);
 	        out.close();
 		}
-		catch (IOException ex)
+		catch (Exception ex)
 		{
 			ex.printStackTrace();
 			System.out.println("Could not write database");
