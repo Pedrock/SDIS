@@ -21,7 +21,7 @@ public class HandlerFactory {
 		String header = matcher.group(0);
 		String version = matcher.group(2);
 		String senderId = matcher.group(3);
-		if (senderId == DBS.getId()) return null; // Ignore own requests
+		if (senderId.equals(DBS.getId())) return null; // Ignore own requests
 		System.out.println("Handler for "+matcher.group(1));
 		if (!version.equals(DBS.getProtocolVersion()))
 		{
