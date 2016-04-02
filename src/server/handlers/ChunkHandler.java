@@ -21,10 +21,9 @@ public class ChunkHandler extends Handler {
 		Matcher matcher = pattern.matcher(header);
 		if (matcher.matches())
 		{
-			int sender = Integer.parseInt(matcher.group(2));
 			String fileId = matcher.group(3);
 			int chunkNumber = Integer.parseInt(matcher.group(4));
-			DBS.getMdrListener().handleChunk(sender, fileId, chunkNumber, getMessageBody());
+			DBS.getMdrListener().handleChunk(fileId, chunkNumber, getMessageBody());
 		}
 	}
 

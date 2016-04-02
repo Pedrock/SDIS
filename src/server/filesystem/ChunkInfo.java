@@ -11,16 +11,16 @@ public class ChunkInfo implements Comparable<ChunkInfo>, Serializable {
 	private ChunkID chunkID = null;
 	private Integer size;
 	private Integer replication;
-	private HashSet<Integer> peers;
+	private HashSet<String> peers;
 	
 	public ChunkInfo() {
-		this.peers = new HashSet<Integer>();
+		this.peers = new HashSet<String>();
 	}
 	
 	public ChunkInfo(Integer size, Integer replication) {
 		this.size = size;
 		this.replication = replication;
-		this.peers = new HashSet<Integer>();
+		this.peers = new HashSet<String>();
 	}
 	
 	public ChunkInfo(ChunkID chunkID, ChunkInfo chunkInfo) {
@@ -48,7 +48,7 @@ public class ChunkInfo implements Comparable<ChunkInfo>, Serializable {
 		return replication;
 	}
 	
-	public HashSet<Integer> getPeers()
+	public HashSet<String> getPeers()
 	{
 		return peers;
 	}

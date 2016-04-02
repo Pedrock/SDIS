@@ -1,5 +1,6 @@
 package server.main;
 import java.io.IOException;
+import java.nio.file.Paths;
 
 import server.filesystem.DatabaseManager;
 import server.filesystem.FileManager;
@@ -14,7 +15,7 @@ public class DBS {
 	public final static int CHUNK_SIZE = 64000;
 	public final static int MAX_CHUNK_SIZE = 65536;
 	
-	private static int id = 1;
+	private static String id;
 	
 	private static McListener mcListener;
 	private static MdbListener mdbListener;
@@ -34,21 +35,17 @@ public class DBS {
 	
 	private static volatile boolean running = false;
 	
-	DBS(String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
+	public DBS(String id, String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
 		mcListener = new McListener(mc_addr, mc_port);
 		mdbListener = new MdbListener(mdb_addr, mdb_port);
 		mdrListener = new MdrListener(mdr_addr, mdr_port);
-		localFM = new FileManager("Files");
-		backupsFM = new FileManager("Backups");
-		restoredFM = new FileManager("Restored");
+		localFM = new FileManager(Paths.get(id,"Files"));
+		backupsFM = new FileManager(Paths.get(id,"Backups"));
+		restoredFM = new FileManager(Paths.get(id,"Restored"));
 		messageBuilder = new MessageBuilder();
 		database = DatabaseManager.fromFile();
 		if (database == null)
 			database = new DatabaseManager();
-	}
-	
-	public DBS(int id, String mc_addr,int mc_port,String mdb_addr,int mdb_port,String mdr_addr,int mdr_port) throws IOException {
-		this(mc_addr,mc_port,mdb_addr,mdb_port,mdr_addr,mdr_port);
 		DBS.id = id;
 	}
 
@@ -85,7 +82,7 @@ public class DBS {
 		return running;
 	}
 	
-	public static int getId()
+	public static String getId()
 	{
 		return id;
 	}

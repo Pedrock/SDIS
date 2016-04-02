@@ -19,7 +19,7 @@ public class StoredHandler extends Handler {
 		Matcher matcher = pattern.matcher(header);
 		if (matcher.matches())
 		{
-			int sender = Integer.parseInt(matcher.group(2));
+			String sender = matcher.group(2);
 			String fileId = matcher.group(3);
 			int chunkNumber = Integer.parseInt(matcher.group(4));
 			DBS.getMcListener().handleStored(sender,fileId,chunkNumber);

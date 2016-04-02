@@ -25,7 +25,7 @@ public class RemovedHandler extends Handler {
 		Matcher matcher = pattern.matcher(header);
 		if (matcher.matches())
 		{
-			int sender = Integer.parseInt(matcher.group(2));
+			String sender = matcher.group(2);
 			String fileId = matcher.group(3);
 			Integer chunkNumber = Integer.parseInt(matcher.group(4));
 			ChunkID chunkID = new ChunkID(fileId,chunkNumber);

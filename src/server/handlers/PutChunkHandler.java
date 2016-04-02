@@ -30,7 +30,6 @@ public class PutChunkHandler extends Handler {
 			String fileId = matcher.group(3);
 			if (DBS.getDatabase().isMyFile(fileId)) return;
 			
-			Integer senderID = Integer.parseInt(matcher.group(2));
 			Integer chunkNumber = Integer.parseInt(matcher.group(4));
 			Integer replication = Integer.parseInt(matcher.group(5));
 			ChunkID chunkID = new ChunkID(fileId, chunkNumber);
@@ -42,7 +41,7 @@ public class PutChunkHandler extends Handler {
 			}
 			
 			byte[] content = getMessageBody();
-			DBS.getMdbListener().handlePutChunk(senderID, fileId, chunkNumber, content);
+			DBS.getMdbListener().handlePutChunk(fileId, chunkNumber, content);
 			if (content == null)
 			{
 				System.out.println("Empty PUTCHUNK");

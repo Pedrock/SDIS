@@ -1,5 +1,6 @@
 package server.filesystem;
 
+import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
@@ -7,6 +8,7 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
+import java.nio.file.Paths;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -109,7 +111,7 @@ public class DatabaseManager{
 		}
 	}
 	
-	public void addChunkPeer(ChunkID chunkID, Integer peerID)
+	public void addChunkPeer(ChunkID chunkID, String peerID)
 	{
 		synchronized (db.chunksInfo) {
 			ChunkInfo info = db.chunksInfo.get(chunkID);
@@ -123,7 +125,7 @@ public class DatabaseManager{
 		saveToFile();
 	}
 	
-	public void removeChunkPeer(ChunkID chunkID, int sender) {
+	public void removeChunkPeer(ChunkID chunkID, String sender) {
 		synchronized (db.chunksInfo) {
 			ChunkInfo info = db.chunksInfo.get(chunkID);
 			if (info != null)
@@ -363,7 +365,8 @@ public class DatabaseManager{
 	
 	private synchronized void saveToFile()
 	{
-		try (FileOutputStream fileOut = new FileOutputStream("database.db");)
+		File file = Paths.get(DBS.getId(), "database.db").toFile();
+		try (FileOutputStream fileOut = new FileOutputStream(file);)
 		{
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
 			out.writeObject(this.db);
@@ -379,7 +382,8 @@ public class DatabaseManager{
 	public static DatabaseManager fromFile()
 	{
 		DB db = null;
-		try (FileInputStream fileIn = new FileInputStream("database.db");
+		File file = Paths.get(DBS.getId(), "database.db").toFile();
+		try (FileInputStream fileIn = new FileInputStream(file);
 				ObjectInputStream in = new ObjectInputStream(fileIn);)
 		{
 			db = (DB)in.readObject();

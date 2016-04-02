@@ -15,7 +15,7 @@ public class MdrListener extends Listener {
 		super(address, port);
 	}
 	
-	public void handleChunk(int sender, String fileId, int chunkNumber, byte[] body) {
+	public void handleChunk(String fileId, int chunkNumber, byte[] body) {
 		ChunkID chunkId = new ChunkID(fileId, chunkNumber);
 		synchronized (runnables) {
 			Object runnable = runnables.get(chunkId);

@@ -18,7 +18,7 @@ class Peer implements PeerInterface{
 	
 	Peer(String[] args) throws IOException
 	{
-		Integer id = Integer.parseInt(args[0]);
+		String id = args[0];
 		Integer mc_port = Integer.parseInt(args[2]);
 		Integer mdb_port = Integer.parseInt(args[4]);
 		Integer mdr_port = Integer.parseInt(args[6]);

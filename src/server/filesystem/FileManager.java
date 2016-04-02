@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
@@ -15,21 +14,20 @@ public class FileManager {
 	private Path path;
 	private MessageDigest md;
 	
-	public FileManager(String path_str) throws IOException {
-		path = Paths.get(path_str);
+	public FileManager(Path path) throws IOException {
+		this.path = path;
 		try {
 			md = MessageDigest.getInstance("SHA-256");
 		} catch (NoSuchAlgorithmException e) {
 			e.printStackTrace();
 			return;
 		}
-		
 		if (Files.exists(path))
 		{
 			if (!Files.isDirectory(path))
-				throw new FileNotFoundException(path_str);
+				throw new FileNotFoundException(path.toString());
 		}
-		else Files.createDirectory(path);
+		else path.toFile().mkdirs();
 	}
 	
 	public boolean fileExists(String file)
@@ -84,9 +82,5 @@ public class FileManager {
         }
         
 		return sb.toString();
-	}
-	
-	public static void main(String[] args) throws IOException {
-		System.out.println(new FileManager("Ficheiros").fileExists("1.txt"));
 	}
 }

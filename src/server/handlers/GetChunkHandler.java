@@ -29,7 +29,6 @@ public class GetChunkHandler extends Handler {
 		if (matcher.matches())
 		{
 			System.out.println("Valid GETCHUNK received");
-			//int sender = Integer.parseInt(matcher.group(2));
 			String fileId = matcher.group(3);
 			int chunkNumber = Integer.parseInt(matcher.group(4));
 			ChunkID chunkID = new ChunkID(fileId, chunkNumber);

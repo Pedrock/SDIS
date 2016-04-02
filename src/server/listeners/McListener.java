@@ -12,13 +12,13 @@ public class McListener extends Listener {
 	
 	private class StoredMapValue {
 		Object runnable;
-		HashSet<Integer> senders;
+		HashSet<String> senders;
 		int replication;
 		
 		StoredMapValue(Object runnable, int replication) {
 			super();
 			this.runnable = runnable;
-			this.senders = new HashSet<Integer>();
+			this.senders = new HashSet<String>();
 			this.replication = replication;
 		}
 	}
@@ -52,7 +52,7 @@ public class McListener extends Listener {
 		}
 	}
 
-	public void handleStored(int sender, String fileId, int chunkNumber) {
+	public void handleStored(String sender, String fileId, int chunkNumber) {
 		ChunkID chunkID = new ChunkID(fileId, chunkNumber);
 		DBS.getDatabase().addChunkPeer(chunkID, sender);
 		synchronized (storedMap) {

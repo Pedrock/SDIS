@@ -15,7 +15,7 @@ public class MdbListener extends Listener {
 		super(address, port);
 	}
 	
-	public void handlePutChunk(int sender, String fileId, int chunkNumber, byte[] body) {
+	public void handlePutChunk(String fileId, int chunkNumber, byte[] body) {
 		ChunkID chunkId = new ChunkID(fileId, chunkNumber);
 		synchronized (runnables) {
 			Runnable runnable = runnables.get(chunkId);
