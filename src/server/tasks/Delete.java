@@ -39,10 +39,13 @@ public class Delete implements Runnable {
 			DBS.getMessageBuilder().sendDelete(fileId);
 			if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			sleep *= 2;
-			try {
-				Thread.sleep(sleep);
-			} catch (InterruptedException e) {}
-			if (!DBS.isRunning()) throw new PeerError("Server stopped");
+			if (i + 1 < MAX_TRIES)
+			{
+				try {
+					Thread.sleep(sleep);
+				} catch (InterruptedException e) {}
+				if (!DBS.isRunning()) throw new PeerError("Server stopped");
+			}
 		}
 	}
 	
