@@ -285,6 +285,13 @@ public class DatabaseManager{
 		}
 	}
 	
+	public void removeDeletion(String fileId)
+	{
+		synchronized (db.myDeletedFiles) {
+			db.myDeletedFiles.remove(fileId);
+		}
+	}
+	
 	public void deleteMyFile(String filename, String fileId)
 	{
 		Integer num_chunks = this.getNumberChunks(fileId);

@@ -40,6 +40,11 @@ public class Backup implements Runnable{
 			ExecutorService executorService = Executors.newCachedThreadPool();
 			String fileId = localFM.generateFileHash(filename);
 			
+			if (DBS.getDatabase().isMyDeletedFile(fileId))
+			{
+				DBS.getDatabase().removeDeletion(fileId);
+			}
+			
 			ArrayList<Future<Boolean>> list = new ArrayList<Future<Boolean>>();
 			
 			for (int n = 0; n < chunks; n++)
