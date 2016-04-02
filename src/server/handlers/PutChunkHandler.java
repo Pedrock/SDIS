@@ -16,6 +16,8 @@ public class PutChunkHandler extends Handler {
 			"PUTCHUNK(?: )+([0-9]\\.[0-9])(?: )+(\\S+)(?: )+(.{64})(?: )+([0-9]+)(?: )+([0-9]+)(?: )+.*?\r\n\r\n",
 			Pattern.DOTALL);
 	
+	Random random = new Random();
+	
 	public PutChunkHandler(String header, byte[] message) {
 		super(header,message);
 	}
@@ -61,7 +63,6 @@ public class PutChunkHandler extends Handler {
 			
 			DBS.getDatabase().resetChunkReplication(chunkID);
 			
-			Random random = new Random();
 			int delay;
 			
 			if (!backed_up && previous_replication >= replication)
@@ -72,13 +73,11 @@ public class PutChunkHandler extends Handler {
 			{
 				delay = random.nextInt(401); // [0,400]
 			}
-			
 			try {
 				Thread.sleep(delay);
 			} catch (InterruptedException e) { }
 			
 			int current_replication = DBS.getDatabase().getChunkCurrentReplication(chunkID);
-			
 			if (!backed_up && current_replication < replication)
 			{
 				File file = DBS.getBackupsFileManager().getFile(chunkID.toString());

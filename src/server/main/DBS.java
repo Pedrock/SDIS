@@ -43,10 +43,10 @@ public class DBS {
 		backupsFM = new FileManager(Paths.get(id,"Backups"));
 		restoredFM = new FileManager(Paths.get(id,"Restored"));
 		messageBuilder = new MessageBuilder();
+		DBS.id = id;
 		database = DatabaseManager.fromFile();
 		if (database == null)
 			database = new DatabaseManager();
-		DBS.id = id;
 	}
 
 	public void start() {
