@@ -287,17 +287,13 @@ public class DatabaseManager{
 	
 	public void deleteMyFile(String filename, String fileId)
 	{
-		Set<Integer> chunksSet = this.getFileChunks(fileId);
-		if (chunksSet != null) {
-			Integer[] chunks = chunksSet.toArray(new Integer[chunksSet.size()]);
-			if (chunks != null)
+		Integer num_chunks = this.getNumberChunks(fileId);
+		if (num_chunks != null) {
+			for (int i = 0; i < num_chunks; i++) 
 			{
-				for (Integer chunk : chunks) 
-				{
-					ChunkID chunkId = new ChunkID(fileId, chunk);
-					synchronized (db.chunksInfo) {
-						db.chunksInfo.remove(chunkId);
-					}
+				ChunkID chunkId = new ChunkID(fileId, i);
+				synchronized (db.chunksInfo) {
+					db.chunksInfo.remove(chunkId);
 				}
 			}
 		}
