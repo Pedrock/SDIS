@@ -5,8 +5,10 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 import server.filesystem.FileManager;
@@ -37,7 +39,9 @@ public class Backup implements Runnable{
 		{
 			ExecutorService executorService = Executors.newCachedThreadPool();
 			String fileId = localFM.generateFileHash(filename);
-			boolean success = true;
+			
+			ArrayList<Future<Boolean>> list = new ArrayList<Future<Boolean>>();
+			
 			for (int n = 0; n < chunks; n++)
 			{
 				long remaining_size = file_size - n*DBS.CHUNK_SIZE;
@@ -47,13 +51,24 @@ public class Backup implements Runnable{
 				ChunkID chunkID = new ChunkID(fileId, n);
 				DBS.getDatabase().addChunkInfo(chunkID, chunk_size, replication);
 				BackupChunk callable = new BackupChunk(new Chunk(chunkID, chunk, replication));
-				executorService.submit(callable);
+				Future<Boolean> future = executorService.submit(callable);
+				list.add(future);
 				try {
 					Thread.sleep(19);
 				} catch (Exception ex) {}
 				if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			}
+			Boolean success = true;
 			executorService.shutdown();
+			for (Future<Boolean> future : list)
+			{
+				Boolean result = future.get();
+				if (result == null || result == false)
+				{
+					success = false;
+					break;
+				}
+			}
 			executorService.awaitTermination(60, TimeUnit.SECONDS);
 			DBS.getDatabase().addSentBackup(filename, fileId, chunks);
 			if (success) System.out.println("Backup finished succesfully");
