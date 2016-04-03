@@ -1,0 +1,23 @@
+﻿Para compilar pode-se usar um IDE ou os seguintes comandos:
+mkdir bin
+javac -cp src -d bin src/Peer.java
+javac -cp src -d bin src/TestApp.java
+
+-------------------------------------------------------------
+
+Para correr o programa entra-se na pasta bin:
+cd bin
+
+Inicia-se o rmiregistry:
+rmiregistry& (Linux/Mac OS)
+start rmiregistry (Windows)
+
+Inicia-se os Peers com o comando:
+java Peer <id> <MC_address> <MC_port> <MDB_address> <MDB_port> <MDR_address> <MDR_port> [allocated_backup_space]
+Por exemplo, para Peer com ID 1 e 10Mb de espaço
+java Peer 1 224.0.0.3 4445 224.0.0.4 4446 224.0.0.5 4447 10000000
+
+Para usar a TestApp, usa-se o comando:
+java TestApp <peer_ap> <sub_protocol> <opnd_1> [opnd_2]
+Por exemplo, para iniciar um backup no peer 1 do ficheiro imagem.jpg com replicação 3:
+java TestApp 1 backup imagem.jpg 3
