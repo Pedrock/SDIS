@@ -7,6 +7,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import server.main.DBS;
+import server.messages.Chunk;
 import server.messages.ChunkID;
 
 public class GetChunkHandler extends Handler {
@@ -28,7 +29,6 @@ public class GetChunkHandler extends Handler {
 		Matcher matcher = pattern.matcher(header);
 		if (matcher.matches())
 		{
-			System.out.println("Valid GETCHUNK received");
 			String fileId = matcher.group(3);
 			int chunkNumber = Integer.parseInt(matcher.group(4));
 			ChunkID chunkID = new ChunkID(fileId, chunkNumber);
@@ -51,8 +51,10 @@ public class GetChunkHandler extends Handler {
 					int chance = DBS.getDatabase().getChunkCurrentReplication(chunkID);
 					boolean multicast = DBS.getDatabase().getchunkReceived(chunkID);
 					
+					Chunk chunk = DBS.getMdrListener().getChunk(chunkID);
+					DBS.getMdrListener().stopListenToChunk(chunkID);
 					
-					if (DBS.getMdrListener().getChunk(chunkID) == null)
+					if (chunk == null)
 					{
 						if (multicast)
 						{
@@ -80,7 +82,6 @@ public class GetChunkHandler extends Handler {
 					
 				}
 			}
-			System.out.println("GETCHUNK handled succesfully");
 		}
 		else System.out.print("Invalid GETCHUNK received");
 	}

@@ -149,7 +149,7 @@ public class Restore implements Runnable{
 					throw (Exception)ex.getCause();
 				}
 				try {
-					Thread.sleep(19);
+					Thread.sleep(113);
 				} catch (Exception ex) {}
 				if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			}

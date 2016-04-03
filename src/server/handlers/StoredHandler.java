@@ -23,7 +23,6 @@ public class StoredHandler extends Handler {
 			String fileId = matcher.group(3);
 			int chunkNumber = Integer.parseInt(matcher.group(4));
 			DBS.getMcListener().handleStored(sender,fileId,chunkNumber);
-			System.out.println("STORED handled succesfully");
 		}
 		else System.out.print("Invalid STORED received");
 	}

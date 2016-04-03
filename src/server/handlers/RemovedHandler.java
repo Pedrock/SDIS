@@ -58,11 +58,11 @@ public class RemovedHandler extends Handler {
 					if (!DBS.getMdbListener().putChunkReceived(chunkID))
 					{
 						byte[] data = DBS.getBackupsFileManager().getChunkContent(chunkID);
-						new BackupChunk(new Chunk(fileId, chunkNumber, data, desired_replication),true).run();
+						if (data != null)
+							new BackupChunk(new Chunk(fileId, chunkNumber, data, desired_replication),true).run();
 					}
 				}
 			}
-			System.out.println("REMOVED handled succesfully");
 		}
 		else System.out.print("Invalid REMOVED received");
 	}

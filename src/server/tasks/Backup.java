@@ -59,7 +59,7 @@ public class Backup implements Runnable{
 				Future<Boolean> future = executorService.submit(callable);
 				list.add(future);
 				try {
-					Thread.sleep(19);
+					Thread.sleep(113);
 				} catch (Exception ex) {}
 				if (!DBS.isRunning()) throw new PeerError("Server stopped");
 			}

@@ -39,7 +39,6 @@ public class DeleteHandler extends Handler {
 					}
 				}
 			}
-			System.out.println("DELETE handled succesfully");
 		}
 		else System.out.print("Invalid DELETE received");
 	}

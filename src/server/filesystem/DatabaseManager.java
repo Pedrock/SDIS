@@ -17,12 +17,6 @@ import java.util.Map.Entry;
 import java.util.Set;
 import java.util.SortedSet;
 import java.util.TreeSet;
-import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.ReadLock;
-import java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock;
 
 import server.main.DBS;
 import server.messages.ChunkID;
@@ -33,35 +27,59 @@ public class DatabaseManager{
 		private static final long serialVersionUID = -8881389891970410854L;
 
 		// Chunks received
-		private HashSet<ChunkID> receivedBackups = new HashSet<ChunkID>();
+		private HashSet<ChunkID> receivedBackups = null;
 
 		// fileID -> chunkNumbers
-		private HashMap<String, HashSet<Integer>> receivedFilesMap = new HashMap<String, HashSet<Integer>>();
+		private HashMap<String, HashSet<Integer>> receivedFilesMap = null;
 
 		// filename -> fileID
-		private HashMap<String, ArrayList<String>> sentBackups = new HashMap<String, ArrayList<String>>();
+		private HashMap<String, ArrayList<String>> sentBackups = null;
 
 		// Every known chunk information
-		private HashMap<ChunkID, ChunkInfo> chunksInfo = new HashMap<ChunkID, ChunkInfo>();
+		private HashMap<ChunkID, ChunkInfo> chunksInfo = null;
 
 		// fileIDs owned by this peer -> number of chunks
-		private HashMap<String,Integer> myFiles = new HashMap<String,Integer>();
+		private HashMap<String,Integer> myFiles = null;
 
 		// Set of deleted fileIDs previously owned by this peer
-		private HashSet<String> myDeletedFiles = new HashSet<String>();
+		private HashSet<String> myDeletedFiles = null;
 
 		// Max backup space
-		private Long backup_space = 3200000L;
+		private Long backup_space = null;
+
+		private void constructor()
+		{
+			if (receivedBackups == null) receivedBackups = new HashSet<ChunkID>();
+			if (receivedFilesMap == null) receivedFilesMap = new HashMap<String, HashSet<Integer>>();
+			if (sentBackups == null) sentBackups = new HashMap<String, ArrayList<String>>();
+			if (chunksInfo == null) chunksInfo = new HashMap<ChunkID, ChunkInfo>();
+			if (myFiles == null) myFiles = new HashMap<String,Integer>();
+			if (myDeletedFiles == null) myDeletedFiles = new HashSet<String>();
+			if (backup_space == null) backup_space = 3200000L;
+		}
+
+		public DB()
+		{
+			constructor();
+		}
+
+		@SuppressWarnings("unchecked")
+		public DB(Object backup_space, Object chunksInfo, Object myDeletedFiles, Object myFiles,
+				Object receivedBackups, Object receivedFilesMap, Object sentBackups) {
+			this.backup_space = (Long) backup_space;
+			this.chunksInfo = (HashMap<ChunkID, ChunkInfo>) chunksInfo;
+			this.myDeletedFiles = (HashSet<String>) myDeletedFiles;
+			this.myFiles = (HashMap<String, Integer>) myFiles;
+			this.receivedBackups = (HashSet<ChunkID>) receivedBackups;
+			this.receivedFilesMap = (HashMap<String, HashSet<Integer>>) receivedFilesMap;
+			this.sentBackups = (HashMap<String, ArrayList<String>>) sentBackups;
+			constructor();
+		}
 	};
 
 	private DB db;
 
 	private HashMap<ChunkID,Long> getchunkTimes = new HashMap<ChunkID,Long>();
-
-	private AtomicBoolean needsSaving = new AtomicBoolean(false);
-	private ReentrantReadWriteLock readWriteLock = new ReentrantReadWriteLock(true);
-	private ReadLock readLock = readWriteLock.readLock();
-	private WriteLock writeLock = readWriteLock.writeLock();
 
 	private Thread thread = new Thread() {
 		@Override
@@ -110,69 +128,46 @@ public class DatabaseManager{
 
 	public long getBackupSpace()
 	{
-		readLock.lock();
-		try {
-			synchronized (db.backup_space) {
-				return db.backup_space;
-			}
-		}
-		finally {
-			readLock.unlock();
+		synchronized (db.backup_space) {
+			return db.backup_space;
 		}
 	}
 
 	public void setBackupSpace(long backup_space)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.backup_space) {
-				db.backup_space = backup_space;
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.backup_space) {
+			db.backup_space = backup_space;
 		}
+		saveToFile(db.backup_space);
 	}
-	
+
 	private void addChunkPeer(ChunkID chunkID, String peerID, boolean save)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				ChunkInfo info = db.chunksInfo.get(chunkID);
-				if (info == null)
-				{
-					info = new ChunkInfo();
-					db.chunksInfo.put(chunkID, info);
-				}
-				info.getPeers().add(peerID);
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
+			if (info == null)
+			{
+				info = new ChunkInfo();
+				db.chunksInfo.put(chunkID, info);
 			}
-		} 
-		finally {
-			readLock.unlock();
+			info.getPeers().add(peerID);
 		}
-		if (save) saveToFile();
+		if (save) saveToFile(db.chunksInfo);
 	}
 
 	public void addChunkPeer(ChunkID chunkID, String peerID)
 	{
 		addChunkPeer(chunkID, peerID, true);
 	}
-	
+
 	private void removeChunkPeer(ChunkID chunkID, String sender, boolean save)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				ChunkInfo info = db.chunksInfo.get(chunkID);
-				if (info != null)
-					info.getPeers().remove(sender);
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
+			if (info != null)
+				info.getPeers().remove(sender);
 		}
-		if (save) saveToFile();
+		if (save) saveToFile(db.chunksInfo);
 	}
 
 	public void removeChunkPeer(ChunkID chunkID, String sender) {
@@ -181,362 +176,257 @@ public class DatabaseManager{
 
 	public void addReceivedBackup(ChunkID chunkId, int size, int replication)
 	{
-		readLock.lock();
-		try {
-			String fileId = chunkId.getFileId();
-			synchronized (db.receivedFilesMap) {
-				HashSet<Integer> fileChunks = db.receivedFilesMap.get(fileId);
-				if (fileChunks == null)
-				{
-					db.receivedFilesMap.put(fileId, new HashSet<Integer>());
-					fileChunks = db.receivedFilesMap.get(fileId);
-				}
-				fileChunks.add(chunkId.getNumber());
-				synchronized (db.chunksInfo) {
-					ChunkInfo info = db.chunksInfo.get(chunkId);
-					if (info == null)
-						db.chunksInfo.put(chunkId,new ChunkInfo(size,replication));
-					else if (info.getSize() == null)
-						info.setInfo(size, replication);
-					synchronized (db.receivedBackups) {
-						db.receivedBackups.add(chunkId);
-					}
-				}
-				addChunkPeer(chunkId, DBS.getId(), false);
+		String fileId = chunkId.getFileId();
+		synchronized (db.receivedFilesMap) {
+			HashSet<Integer> fileChunks = db.receivedFilesMap.get(fileId);
+			if (fileChunks == null)
+			{
+				db.receivedFilesMap.put(fileId, new HashSet<Integer>());
+				fileChunks = db.receivedFilesMap.get(fileId);
 			}
-		} 
-		finally {
-			readLock.unlock();
-		}
-		saveToFile();
-	}
-
-	public void addChunkInfo(ChunkID chunkId, int size, int replication)
-	{
-		readLock.lock();
-		try {
-
+			fileChunks.add(chunkId.getNumber());
 			synchronized (db.chunksInfo) {
 				ChunkInfo info = db.chunksInfo.get(chunkId);
 				if (info == null)
 					db.chunksInfo.put(chunkId,new ChunkInfo(size,replication));
 				else if (info.getSize() == null)
 					info.setInfo(size, replication);
+				synchronized (db.receivedBackups) {
+					db.receivedBackups.add(chunkId);
+				}
 			}
-		} 
-		finally {
-			readLock.unlock();
+			addChunkPeer(chunkId, DBS.getId(), false);
 		}
-		saveToFile();
+		saveToFile(db.receivedFilesMap, db.chunksInfo, db.receivedBackups);
+	}
+
+	public void addChunkInfo(ChunkID chunkId, int size, int replication)
+	{
+
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkId);
+			if (info == null)
+				db.chunksInfo.put(chunkId,new ChunkInfo(size,replication));
+			else if (info.getSize() == null)
+				info.setInfo(size, replication);
+		}
+
+		saveToFile(db.chunksInfo);
 	}
 
 	public boolean hasBackup(ChunkID chunkID)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.receivedBackups) {
-				return db.receivedBackups.contains(chunkID);
-			}
-		} 
-		finally {
-			readLock.unlock();
+
+		synchronized (db.receivedBackups) {
+			return db.receivedBackups.contains(chunkID);
 		}
 	}
 
 	public int getChunkCurrentReplication(ChunkID chunkID)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				ChunkInfo info = db.chunksInfo.get(chunkID);
-				if (info == null) return 0;
-				return info.getPeers().size();
-			}
-		} 
-		finally {
-			readLock.unlock();
+
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
+			if (info == null) return 0;
+			return info.getPeers().size();
 		}
 	}
 
 	public Integer getChunkDesiredReplication(ChunkID chunkID)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				ChunkInfo info = db.chunksInfo.get(chunkID);
-				if (info == null) return null;
-				return info.getDesiredReplication();
-			}
-		} 
-		finally {
-			readLock.unlock();
+
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
+			if (info == null) return null;
+			return info.getDesiredReplication();
 		}
 	}
 
 	public long getTotalUsedSpace()
 	{
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				synchronized (db.receivedBackups) {
-					long sum = 0;
-					for (ChunkID chunkID : db.receivedBackups)
-					{
-						sum += db.chunksInfo.get(chunkID).getSize();
-					}
-					return sum;
+
+		synchronized (db.chunksInfo) {
+			synchronized (db.receivedBackups) {
+				long sum = 0;
+				for (ChunkID chunkID : db.receivedBackups)
+				{
+					sum += db.chunksInfo.get(chunkID).getSize();
 				}
+				return sum;
 			}
-		} 
-		finally {
-			readLock.unlock();
 		}
 	}
 
 	@SuppressWarnings("unchecked")
 	private HashMap<ChunkID, ChunkInfo> cloneChunksInfo()
 	{
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				return (HashMap<ChunkID, ChunkInfo>)db.chunksInfo.clone();
-			}
-		} 
-		finally {
-			readLock.unlock();
+
+		synchronized (db.chunksInfo) {
+			return (HashMap<ChunkID, ChunkInfo>)db.chunksInfo.clone();
 		}
 	}
 
 	public void resetChunkReplication(ChunkID chunkID)
 	{
 		boolean save = false;
-		readLock.lock();
-		try {
-			synchronized (db.chunksInfo) {
-				ChunkInfo info = db.chunksInfo.get(chunkID);
-				if (info != null) info.resetReplication();
-			}
-			synchronized (db.receivedBackups) {
-				if (db.receivedBackups.contains(chunkID))
-				{
-					save = true;
-					addChunkPeer(chunkID, DBS.getId(), false);
-				}
-			}
-		} 
-		finally {
-			readLock.unlock();
-			if (save) saveToFile();
+		synchronized (db.chunksInfo) {
+			ChunkInfo info = db.chunksInfo.get(chunkID);
+			if (info != null) info.resetReplication();
 		}
+		synchronized (db.receivedBackups) {
+			if (db.receivedBackups.contains(chunkID))
+			{
+				save = true;
+				addChunkPeer(chunkID, DBS.getId(), false);
+			}
+		}
+		if (save) saveToFile(db.chunksInfo, db.receivedBackups);
 	}
 
 	public SortedSet<ChunkInfo> getBackupChunksInfo()
 	{
-		readLock.lock();
-		try {
-			SortedSet<ChunkInfo> result = new TreeSet<ChunkInfo>();
-			HashMap<ChunkID, ChunkInfo> map = cloneChunksInfo();
-			for (Entry<ChunkID, ChunkInfo> entry : map.entrySet())
-			{
-				boolean backupReceived;
-				synchronized (db.receivedBackups) {
-					backupReceived = db.receivedBackups.contains(entry.getKey());
-				}
-				if (backupReceived)
-					result.add(new ChunkInfo(entry.getKey(), entry.getValue()));
+		SortedSet<ChunkInfo> result = new TreeSet<ChunkInfo>();
+		HashMap<ChunkID, ChunkInfo> map = cloneChunksInfo();
+		for (Entry<ChunkID, ChunkInfo> entry : map.entrySet())
+		{
+			boolean backupReceived;
+			synchronized (db.receivedBackups) {
+				backupReceived = db.receivedBackups.contains(entry.getKey());
 			}
-			return result;
-		} 
-		finally {
-			readLock.unlock();
+			if (backupReceived)
+				result.add(new ChunkInfo(entry.getKey(), entry.getValue()));
 		}
+		return result;
 	}
 
 
 	public void addSentBackup(String filename, String fileId, int n_chunks)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.sentBackups) {
-				ArrayList<String> list = db.sentBackups.get(filename);
-				if (list == null) {
-					db.sentBackups.put(filename, new ArrayList<String>());
-					list = db.sentBackups.get(filename);
-				}
-				list.add(fileId);
+		synchronized (db.sentBackups) {
+			ArrayList<String> list = db.sentBackups.get(filename);
+			if (list == null) {
+				db.sentBackups.put(filename, new ArrayList<String>());
+				list = db.sentBackups.get(filename);
 			}
-			synchronized (db.myFiles) {
-				db.myFiles.put(fileId,n_chunks);
-			}
-		} 
-		finally {
-			readLock.unlock();
+			list.add(fileId);
 		}
-		saveToFile();
+		synchronized (db.myFiles) {
+			db.myFiles.put(fileId,n_chunks);
+		}
+		saveToFile(db.sentBackups, db.myFiles);
 	}
 
 	public Integer getNumberChunks(String fileId)
 	{
-		readLock.lock();
-		try {
-			return db.myFiles.get(fileId);
-		} 
-		finally {
-			readLock.unlock();
-		}
-
+		return db.myFiles.get(fileId);
 	}
 
 	public boolean isMyFile(String fileId)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.myFiles) {
-				return db.myFiles.containsKey(fileId);
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.myFiles) {
+			return db.myFiles.containsKey(fileId);
 		}
 	}
 
 	public boolean isMyDeletedFile(String fileId) 
 	{
-		readLock.lock();
-		try {
-			synchronized (db.myDeletedFiles) {
-				return db.myDeletedFiles.contains(fileId);
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.myDeletedFiles) {
+			return db.myDeletedFiles.contains(fileId);
 		}
 	}
 
 	public void removeDeletion(String fileId)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.myDeletedFiles) {
-				db.myDeletedFiles.remove(fileId);
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.myDeletedFiles) {
+			db.myDeletedFiles.remove(fileId);
 		}
+		saveToFile(db.myDeletedFiles);
 	}
 
 	public void deleteMyFile(String filename, String fileId)
 	{
-		readLock.lock();
-		try {
-			Integer num_chunks = this.getNumberChunks(fileId);
-			if (num_chunks != null) {
-				for (int i = 0; i < num_chunks; i++) 
-				{
-					ChunkID chunkId = new ChunkID(fileId, i);
-					synchronized (db.chunksInfo) {
-						db.chunksInfo.remove(chunkId);
-					}
+		Integer num_chunks = this.getNumberChunks(fileId);
+		if (num_chunks != null) {
+			for (int i = 0; i < num_chunks; i++) 
+			{
+				ChunkID chunkId = new ChunkID(fileId, i);
+				synchronized (db.chunksInfo) {
+					db.chunksInfo.remove(chunkId);
 				}
 			}
-			synchronized (db.myDeletedFiles) {
-				db.myDeletedFiles.add(fileId);
-			}
-			synchronized (db.sentBackups) {
-				db.sentBackups.remove(filename);
-			}
-			synchronized (db.myFiles) {
-				db.myFiles.remove(fileId);
-			}
-		} 
-		finally {
-			readLock.unlock();
 		}
-		saveToFile();
+		synchronized (db.myDeletedFiles) {
+			db.myDeletedFiles.add(fileId);
+		}
+		synchronized (db.sentBackups) {
+			db.sentBackups.remove(filename);
+		}
+		synchronized (db.myFiles) {
+			db.myFiles.remove(fileId);
+		}
+		saveToFile(db.chunksInfo, db.myDeletedFiles, db.sentBackups, db.myFiles);
 	}
 
 	public String getLastSentFileId(String filename)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.sentBackups) {
-				ArrayList<String> list = db.sentBackups.get(filename);
-				if (list == null || list.isEmpty()) return null;
-				return list.get(list.size()-1);
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.sentBackups) {
+			ArrayList<String> list = db.sentBackups.get(filename);
+			if (list == null || list.isEmpty()) return null;
+			return list.get(list.size()-1);
 		}
 	}
 
 	public void removeReceivedBackup(ChunkID chunkId, boolean isDelete)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.receivedFilesMap) {
-				String fileId = chunkId.getFileId();
-				HashSet<Integer> chunks = db.receivedFilesMap.get(fileId);
-				if (chunks == null) return;
-				chunks.remove(chunkId.getNumber());
-				if (chunks.isEmpty())
-					db.receivedFilesMap.remove(fileId);
-				if (isDelete)
-				{
-					synchronized (db.chunksInfo) {
-						db.chunksInfo.remove(chunkId);
-					}
-				}
-				db.receivedBackups.remove(chunkId);
-			}
-			removeChunkPeer(chunkId, DBS.getId(), false);
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.receivedFilesMap) {
+			String fileId = chunkId.getFileId();
+			HashSet<Integer> chunks = db.receivedFilesMap.get(fileId);
+			if (chunks == null) return;
+			chunks.remove(chunkId.getNumber());
+			if (chunks.isEmpty())
+				db.receivedFilesMap.remove(fileId);
 		}
-		saveToFile();
+		if (isDelete)
+		{
+			synchronized (db.chunksInfo) {
+				db.chunksInfo.remove(chunkId);
+			}
+			saveToFile(db.chunksInfo);
+		}
+		synchronized (db.receivedBackups) {
+			db.receivedBackups.remove(chunkId);
+		}
+		removeChunkPeer(chunkId, DBS.getId(), false);
+		saveToFile(db.receivedFilesMap, db.receivedBackups);
 	}
 
 	public Set<Integer> getFileChunks(String fileId)
 	{
-		readLock.lock();
-		try {
-			synchronized (db.receivedFilesMap) {
-				return db.receivedFilesMap.get(fileId);
-			}
-		} 
-		finally {
-			readLock.unlock();
+		synchronized (db.receivedFilesMap) {
+			return db.receivedFilesMap.get(fileId);
 		}
 	}
 
 	public boolean getchunkReceived(ChunkID chunkID)
 	{
-		readLock.lock();
-		try {
-			boolean result;
-			synchronized (getchunkTimes) {
-				result = getchunkTimes.containsKey(chunkID);
-				getchunkTimes.put(chunkID, Instant.now().getEpochSecond());
-			}
-			return result;
-		} 
-		finally {
-			readLock.unlock();
+		boolean result;
+		synchronized (getchunkTimes) {
+			result = getchunkTimes.containsKey(chunkID);
+			getchunkTimes.put(chunkID, Instant.now().getEpochSecond());
 		}
+		return result;
 	}
 
-	private void saveToFile()
+	private void saveToFile(Object object, String filename)
 	{
-		needsSaving.set(true);
-		writeLock.lock();
-		if (!needsSaving.get()) return;
-		File file = Paths.get(DBS.getId(), "database.db").toFile();
+		File file = Paths.get(DBS.getId(), filename).toFile();
+
 		try (FileOutputStream fileOut = new FileOutputStream(file);)
 		{
 			ObjectOutputStream out = new ObjectOutputStream(fileOut);
-			out.writeObject(this.db);
+			synchronized (object) {
+				out.writeObject(object);
+			}
 			out.close();
 		}
 		catch (Exception ex)
@@ -544,25 +434,42 @@ public class DatabaseManager{
 			ex.printStackTrace();
 			System.out.println("Could not write database");
 		}
-		finally {
-			needsSaving.set(false);
-			writeLock.unlock();
+	}
+
+	private void saveToFile(Object object)
+	{
+		String filename = null;
+		if (object == db.backup_space) filename = "backup_space";
+		else if (object == db.chunksInfo) filename = "chunksInfo";
+		else if (object == db.myDeletedFiles) filename = "myDeletedFiles";
+		else if (object == db.myFiles) filename = "myFiles";
+		else if (object == db.receivedBackups) filename = "receivedBackups";
+		else if (object == db.receivedFilesMap) filename = "receivedFilesMap";
+		else if (object == db.sentBackups) filename = "sentBackups";
+		if (filename == null) return;
+		filename += ".db";
+		saveToFile(object, filename);
+	}
+
+	private void saveToFile(Object... objects)
+	{
+		for (Object object : objects)
+		{
+			saveToFile(object);
 		}
 	}
 
-	public static DatabaseManager fromFile()
+	private static Object fromFile(String filename)
 	{
-		DB db = null;
-		File file = Paths.get(DBS.getId(), "database.db").toFile();
+		File file = Paths.get(DBS.getId(), filename).toFile();
 		try (FileInputStream fileIn = new FileInputStream(file);
 				ObjectInputStream in = new ObjectInputStream(fileIn);)
 		{
-			db = (DB)in.readObject();
+			return in.readObject();
 		}catch(IOException i)
 		{
 			if (i instanceof FileNotFoundException)
 			{
-				System.out.println("Database does not exist");
 				return null;
 			}
 			i.printStackTrace();
@@ -572,6 +479,20 @@ public class DatabaseManager{
 			c.printStackTrace();
 			return null;
 		}
+	}
+
+	public static DatabaseManager fromFile()
+	{
+		Object backup_space = fromFile("backup_space.db");
+		Object chunksInfo = fromFile("chunksInfo.db");
+		Object myDeletedFiles = fromFile("myDeletedFiles.db");
+		Object myFiles = fromFile("myFiles.db");
+		Object receivedBackups = fromFile("receivedBackups.db");
+		Object receivedFilesMap = fromFile("receivedFilesMap.db");
+		Object sentBackups = fromFile("sentBackups.db");
+
+		DB db = new DB(backup_space, chunksInfo, myDeletedFiles, myFiles, receivedBackups, receivedFilesMap, sentBackups);
+
 		DatabaseManager databaseManager = new DatabaseManager(db);
 		return databaseManager;
 	}

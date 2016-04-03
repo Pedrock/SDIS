@@ -46,7 +46,7 @@ class Peer implements PeerInterface{
 				remote_object_name = args[0];
 				PeerInterface stub = (PeerInterface) UnicastRemoteObject.exportObject(server,0);
 				Registry registry = LocateRegistry.getRegistry();
-				registry.bind(remote_object_name, stub);
+				registry.rebind(remote_object_name, stub);
 				server.start();
 			} catch (Exception e) {
 				e.printStackTrace();

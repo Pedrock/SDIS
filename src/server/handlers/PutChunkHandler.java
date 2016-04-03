@@ -27,8 +27,6 @@ public class PutChunkHandler extends Handler {
 		Matcher matcher = pattern.matcher(header);
 		if (matcher.matches())
 		{
-			System.out.println("Valid PUTCHUNK received");
-			
 			String fileId = matcher.group(3);
 			if (DBS.getDatabase().isMyFile(fileId)) return;
 			

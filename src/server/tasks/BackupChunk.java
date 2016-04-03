@@ -17,19 +17,21 @@ public class BackupChunk implements Callable<Boolean>{
 	private Chunk chunk;
 	
 	private boolean success = false;
-	private boolean nonInitiator = false;
+	private boolean nonInitiator;
 	
 	public BackupChunk(Chunk chunk)
 	{
-		try {
-			semaphore.acquire();
-		} catch (InterruptedException e) {}
-		this.chunk = chunk;
+		this(chunk, false);
 	}
 	
 	public BackupChunk(Chunk chunk, boolean nonInitiator) {
-		this(chunk);
 		this.nonInitiator = nonInitiator;
+		if (!nonInitiator) {
+			try {
+				semaphore.acquire();
+			} catch (InterruptedException e) {}
+		}
+		this.chunk = chunk;
 	}
 	
 	boolean wasSuccessful()
@@ -55,7 +57,6 @@ public class BackupChunk implements Callable<Boolean>{
 				}
 				sleep *= 2;
 				success = (DBS.getMcListener().getStoredCount(chunk) >= chunk.getReplicationDegree());
-			
 				if (nonInitiator && !DBS.getDatabase().hasBackup(chunk.getID()))
 				{
 					System.out.println("No backup");
@@ -73,7 +74,7 @@ public class BackupChunk implements Callable<Boolean>{
 		}
 		finally
 		{
-			semaphore.release();
+			if (!this.nonInitiator) semaphore.release();
 		}
 	}
 	
