@@ -45,15 +45,16 @@ public class SpaceReclaiming implements Runnable {
 			
 			byte[] content = DBS.getBackupsFileManager().getChunkContent(chunkID);
 			
-			if (content != null && DBS.getDatabase().getChunkCurrentReplication(chunkID) < replication)
+			DBS.getDatabase().addReceivedBackup(chunkID, info.getSize(), info.getDesiredReplication());
+			
+			if (content != null && (DBS.getDatabase().getChunkCurrentReplication(chunkID)-1) < replication)
 			{
 				Chunk chunk = new Chunk(info.getChunkID(),content,info.getDesiredReplication());
-				DBS.getDatabase().addReceivedBackup(chunkID, info.getSize(), info.getDesiredReplication());
 				BackupChunk task = new BackupChunk(chunk,true);
 				task.run();
 			}
 			
-			if (content == null || DBS.getDatabase().getChunkCurrentReplication(chunkID) >= replication)
+			if (content == null || DBS.getDatabase().getChunkCurrentReplication(chunkID) > replication)
 			{
 				usedSpace -= deleteChunk(info);
 			}
